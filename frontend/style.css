@@ -1,0 +1,220 @@
+body {
+    font-family: sans-serif;
+    background-color: #f4f4f4;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 20px 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+h1, h2, h3, h4 {
+    text-align: center;
+    color: #555;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+.form-group.horizontal {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.form-group.horizontal .input-group {
+    flex: 1;
+    min-width: 120px;
+}
+
+.form-group.horizontal .input-group label {
+    display: block;
+    text-align: center;
+}
+
+.form-group.horizontal .input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+input[type="number"], input[type="text"], select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.checkbox-group {
+    display: flex;
+    gap: 15px;
+}
+
+.checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+button, .submit-button, .view-details-btn, .delete-btn, #add-to-report-btn, #delete-detailed-btn {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button:hover, .submit-button:hover, .view-details-btn:hover, #add-to-report-btn:hover {
+    background-color: #0056b3;
+}
+
+.delete-btn, #delete-detailed-btn {
+    background-color: #dc3545;
+}
+
+.delete-btn:hover, #delete-detailed-btn:hover {
+    background-color: #c82333;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tr:hover {
+    background-color: #e9ecef;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.action-buttons button {
+    padding: 5px 8px;
+    font-size: 12px;
+}
+
+.navigation-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 15px;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.main-button, .back-link {
+    display: inline-block;
+    padding: 15px;
+    background-color: #4CAF50;
+    color: white;
+    text-align: center;
+    text-decoration: none;
+    font-size: 1.2rem;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+    width: 250px;
+}
+
+.main-button:hover, .back-link:hover {
+    background-color: #45a049;
+}
+
+#reports-table-container {
+    display: block;
+}
+
+#reports-table-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#reports-table-container th, #reports-table-container td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#workers-list li, #paytypes-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#workers-list .actions, #paytypes-list .actions {
+    display: flex;
+    gap: 5px;
+}
+
+#workers-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+#workers-table th, #workers-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+#workers-table th {
+    background-color: #f2f2f2;
+}
+
+#workers-table td .actions {
+    white-space: nowrap;
+}
+
+#workers-table .edit-name-input, #workers-table .edit-rate-input {
+    width: auto;
+    max-width: 100px;
+}
+
+.hidden {
+    display: none;
+}
+
+.edit-input, .edit-name-input, .edit-rate-input {
+    width: 60%;
+    margin-right: 10px;
+}

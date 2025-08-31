@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Довідник працівників</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Повернутися до звітів</a>
+        <h1>Довідник працівників</h1>
+
+        <form id="add-worker-form">
+            <div class="form-group">
+                <label for="workerName-input">Ім'я:</label>
+                <input type="text" id="workerName-input" name="name" required>
+            </div>
+            <div class="form-group">
+                <label for="workerRate-input">Ставка за замовчуванням:</label>
+                <input type="number" id="workerRate-input" name="default_hourly_rate" min="0" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="phone-input">Номер телефону:</label>
+                <input type="text" id="phone-input" name="phone_number" placeholder="не обов'язково">
+            </div>
+            <button type="submit">Додати</button>
+        </form>
+
+        <hr>
+
+        <div id="workers-list-container">
+            <h2>Існуючі працівники</h2>
+            <table id="workers-table">
+                <thead>
+                    <tr>
+                        <th>Ім'я</th>
+                        <th>Ставка (грн/год)</th>
+                        <th>Телефон</th>
+                        <th>Дії</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script src="workers.js"></script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Звіт по роботах</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <div class="navigation-buttons">
+        <a href="paytypes.html" class="main-button">Керувати типами оплати</a>
+        <a href="workers.html" class="main-button">Керувати працівниками</a>
+        <a href="reports.html" class="main-button">Переглянути звіти</a>
+    </div>
+
+    <div id="final-report-container">
+        <h3>Додаткові бенефіти</h3>
+        <form id="final-report-form">
+            <div class="form-group">
+                <label for="job-number-input">Номер роботи:</label>
+                <input type="text" id="job-number-input" name="job_number" required>
+            </div>
+            <div class="form-group horizontal">
+                <div class="input-group">
+                    <label for="cash-input">Cash</label>
+                    <input type="number" id="cash-input" name="cash_sum" min="0" step="1" value="0">
+                </div>
+                <div class="input-group">
+                    <label for="zelle-input">Zelle</label>
+                    <input type="number" id="zelle-input" name="zelle_sum" min="0" step="1" value="0">
+                </div>
+                <div class="input-group">
+                    <label for="cc-input">CC</label>
+                    <input type="number" id="cc-input" name="cc_sum" min="0" step="1" value="0">
+                </div>
+                <div class="input-group">
+                    <label for="venmo-input">Venmo</label>
+                    <input type="number" id="venmo-input" name="venmo_sum" min="0" step="1" value="0">
+                </div>
+            </div>
+            <div class="form-group horizontal">
+                <div class="input-group">
+                    <label for="heavy-input-final">Heavy</label>
+                    <input type="number" id="heavy-input-final" name="heavy_sum" min="0" step="0.01" value="0">
+                </div>
+                <div class="input-group">
+                    <label for="tips-input-final">Tips</label>
+                    <input type="number" id="tips-input-final" name="tips_sum" min="0" step="0.01" value="0">
+                </div>
+                <div class="input-group">
+                    <label for="gas-input-final">Gas</label>
+                    <input type="number" id="gas-input-final" name="gas_sum" min="0" step="0.01" value="0">
+                </div>
+            </div>
+        </form>
+
+        <hr>
+
+        <h3>Додати працівника до звіту</h3>
+        <form id="add-to-report-form">
+            <div class="form-group">
+                <label for="worker-select">Працівник:</label>
+                <select id="worker-select" name="worker_id" required></select>
+            </div>
+            <div class="form-group">
+                <label for="hours-input">Години роботи:</label>
+                <input type="number" id="hours-input" name="hours_worked" min="0" step="0.1" required>
+            </div>
+            <div class="form-group">
+                <label for="rate-input">Ставка за годину:</label>
+                <input type="number" id="rate-input" name="actual_hourly_rate" min="0" step="0.01" required>
+            </div>
+            <div class="checkbox-group">
+                <label><input type="checkbox" name="heavy"> Heavy</label>
+                <label><input type="checkbox" name="tips"> Tips</label>
+                <label><input type="checkbox" name="gas"> Gas</label>
+            </div>
+            <button type="submit" id="add-to-report-btn">Додати працівника</button>
+        </form>
+
+        <hr>
+
+        <h3>Дійові особи</h3>
+        <table id="temp-reports-table">
+            <thead>
+                <tr>
+                    <th>Працівник</th>
+                    <th>Години</th>
+                    <th>Ставка</th>
+                    <th>Heavy</th>
+                    <th>Tips</th>
+                    <th>Gas</th>
+                    <th>Сума</th>
+                    <th>Дії</th>
+                </tr>
+            </thead>
+            <tbody>
+            </tbody>
+        </table>
+        
+        <button type="submit" form="final-report-form" class="submit-button">Сформувати звіт</button>
+    </div>
+
+    <script src="app.js?v=2"></script>
+</body>
+</html>

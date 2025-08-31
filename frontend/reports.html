@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Звіти</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-link">← Створити звіт</a>
+        <h1>Звіти</h1>
+        
+        <div id="main-reports-view">
+            <h3>Зведені звіти</h3>
+            <div id="reports-table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Номер роботи</th>
+                            <th>Кількість працівників</th>
+                            <th>Загальна сума</th>
+                            <th>Загальна оплата</th>
+                            <th>Дата</th>
+                            <th>Дії</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="report-details-view" style="display: none;">
+            <a href="#" id="back-to-reports-link">← Назад до звітів</a>
+            <h3 id="report-details-title"></h3>
+            
+            <div id="report-summary-info"></div>
+
+            <h4>Дійові особи</h4>
+            <div id="report-entries-table-container">
+                <table id="report-entries-table">
+                    <thead>
+                        <tr>
+                            <th>Працівник</th>
+                            <th>Телефон</th>
+                            <th>Години</th>
+                            <th>Ставка</th>
+                            <th>Heavy</th>
+                            <th>Tips</th>
+                            <th>Gas</th>
+                            <th>Сума</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    </tbody>
+                </table>
+            </div>
+            <button id="delete-detailed-btn">Видалити звіт</button>
+        </div>
+    </div>
+    <script src="reports.js?v=2"></script>
+</body>
+</html>
