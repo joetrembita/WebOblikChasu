@@ -1,5 +1,25 @@
 const backendUrl = 'http://localhost:3000';
 
+function formatDate(dateString) {
+    console.log('Вхідна dateString:', dateString);
+    let date = new Date(dateString);
+    if (dateString.endsWith('Z')) {
+        const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+        date = new Date(date.getTime() - offsetMs);
+    }
+    if (isNaN(date)) {
+        return 'Невалідна дата';
+    }
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const formattedDate = `${day}.${month}.${year} ${hours}:${minutes}`;
+    console.log('Відформатована дата:', formattedDate);
+    return formattedDate;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const backToReportsLink = document.getElementById('back-to-reports-link');
     if (backToReportsLink) {
@@ -21,6 +41,7 @@ async function loadReports() {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const finalReports = await response.json();
+        console.log('Отримані звіти:', finalReports);
 
         const table = document.querySelector('#reports-table-container table');
         const reportsTableBody = table ? table.querySelector('tbody') : null;
@@ -37,13 +58,15 @@ async function loadReports() {
         }
 
         finalReports.forEach(report => {
+            const totalPayment = (report.cash_sum + report.zelle_sum + report.cc_sum + report.venmo_sum).toFixed(2);
+            const paymentBreakdown = `Cash: ${report.cash_sum.toFixed(2)}, Zelle: ${report.zelle_sum.toFixed(2)}, CC: ${report.cc_sum.toFixed(2)}, Venmo: ${report.venmo_sum.toFixed(2)}`;
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${report.job_number}</td>
                 <td>${report.worker_count}</td>
                 <td>${(report.total_cost).toFixed(2)}</td>
-                <td>${(report.total_payment).toFixed(2)}</td>
-                <td>${report.report_date}</td>
+                <td>${totalPayment} (${paymentBreakdown})</td>
+                <td>${formatDate(report.report_date)}</td>
                 <td class="action-buttons">
                     <button class="view-details-btn" data-id="${report.id}">Переглянути</button>
                     <button class="delete-btn" data-id="${report.id}">Видалити</button>
@@ -70,14 +93,15 @@ async function showReportDetails(reportId) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const reportData = await response.json();
+        console.log('Дані звіту:', reportData);
         
         const report = reportData.report;
-        const entries = reportData.entries.filter(entry => entry.worker_name); // Exclude "Дохід компанії"
+        const entries = reportData.entries.filter(entry => entry.worker_name);
         
         document.getElementById('main-reports-view').style.display = 'none';
         document.getElementById('report-details-view').style.display = 'block';
 
-        document.getElementById('report-details-title').textContent = `Звіт ${report.job_number} від ${report.report_date}`;
+        document.getElementById('report-details-title').textContent = `Звіт ${report.job_number} від ${formatDate(report.report_date)}`;
 
         const heavyWorkersCount = entries.filter(e => e.heavy).length;
         const companyHeavy = heavyWorkersCount > 0 ? report.heavy_sum / (heavyWorkersCount + 1) : 0;
@@ -85,12 +109,15 @@ async function showReportDetails(reportId) {
         const perTips = tipsWorkersCount > 0 ? report.tips_sum / tipsWorkersCount : 0;
         const gasWorkersCount = entries.filter(e => e.gas).length;
         const perGas = gasWorkersCount > 0 ? report.gas_sum / gasWorkersCount : 0;
-        const perHeavy = companyHeavy; // Same value as company share
+        const perHeavy = companyHeavy;
+
+        const totalPayment = (report.cash_sum + report.zelle_sum + report.cc_sum + report.venmo_sum).toFixed(2);
+        const paymentBreakdown = `Cash: ${report.cash_sum.toFixed(2)}, Zelle: ${report.zelle_sum.toFixed(2)}, CC: ${report.cc_sum.toFixed(2)}, Venmo: ${report.venmo_sum.toFixed(2)}`;
 
         document.getElementById('report-summary-info').innerHTML = `
             <p><strong>Номер роботи:</strong> ${report.job_number}</p>
             <p><strong>Оплата праці:</strong> ${report.total_labor_cost.toFixed(2)}</p>
-            <p><strong>Загальна оплата:</strong> ${report.total_payment.toFixed(2)}</p>
+            <p><strong>Оплати:</strong> ${totalPayment} (${paymentBreakdown})</p>
             <p><strong>Сума Heavy:</strong> ${report.heavy_sum.toFixed(2)}</p>
             <p><strong>Сума Tips:</strong> ${report.tips_sum.toFixed(2)}</p>
             <p><strong>Сума Gas:</strong> ${report.gas_sum.toFixed(2)}</p>
@@ -137,7 +164,7 @@ async function deleteReport(event) {
 
     if (confirmDelete) {
         try {
-            const response = await fetch(`${backendUrl}/final-reports/${reportId}`, {
+            const response = await fetch(`${backwardUrl}/final-reports/${reportId}`, {
                 method: 'DELETE'
             });
 

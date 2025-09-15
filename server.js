@@ -21,6 +21,7 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         phone_number TEXT,
+        email TEXT,
         default_hourly_rate REAL NOT NULL
     )`);
 
@@ -52,13 +53,21 @@ db.serialize(() => {
         FOREIGN KEY (worker_id) REFERENCES workers(id)
     )`);
 
-    const insertWorkers = db.prepare("INSERT OR IGNORE INTO workers (id, name, phone_number, default_hourly_rate) VALUES (?, ?, ?, ?)");
-    insertWorkers.run(1, 'Іван Петров', '099-111-22-33', 150);
-    insertWorkers.run(2, 'Марія Іванова', '067-444-55-66', 175);
+    db.run(`CREATE TABLE IF NOT EXISTS logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        action TEXT NOT NULL,
+        details TEXT NOT NULL,
+        timestamp TEXT NOT NULL
+    )`);
+
+    const insertWorkers = db.prepare("INSERT OR IGNORE INTO workers (id, name, phone_number, email, default_hourly_rate) VALUES (?, ?, ?, ?, ?)");
+    insertWorkers.run(1, 'Іван Петров', '099-111-22-33', 'ivan@example.com', 150);
+    insertWorkers.run(2, 'Марія Іванова', '067-444-55-66', 'maria@example.com', 175);
     insertWorkers.finalize();
 
+    const testReportDate = '2025-08-29T10:00';
     const insertFinalReport = db.prepare(`INSERT OR IGNORE INTO final_reports (id, job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
-    insertFinalReport.run(1, 'JOB001', '2025-08-29', 50, 30, 20, 10, 100, 50, 25, 300, (err) => {
+    insertFinalReport.run(1, 'JOB001', testReportDate, 50, 30, 20, 10, 100, 50, 25, 300, (err) => {
         if (err) console.error('Error inserting test final report:', err);
     });
     insertFinalReport.finalize();
@@ -70,8 +79,17 @@ db.serialize(() => {
     insertReportEntry.finalize();
 });
 
+function logAction(action, details) {
+    const timestamp = new Date().toISOString();
+    db.run(`INSERT INTO logs (action, details, timestamp) VALUES (?, ?, ?)`, [action, details, timestamp], (err) => {
+        if (err) {
+            console.error('Помилка запису в лог:', err.message);
+        }
+    });
+}
+
 app.get('/workers', (req, res) => {
-    db.all("SELECT id, name, phone_number, default_hourly_rate FROM workers", [], (err, rows) => {
+    db.all("SELECT id, name, phone_number, email, default_hourly_rate FROM workers", [], (err, rows) => {
         if (err) {
             res.status(500).json({ error: err.message });
             return;
@@ -90,7 +108,6 @@ app.get('/final-reports', (req, res) => {
             final_reports.zelle_sum,
             final_reports.cc_sum,
             final_reports.venmo_sum,
-            (final_reports.cash_sum + final_reports.zelle_sum + final_reports.cc_sum + final_reports.venmo_sum) AS total_payment,
             final_reports.heavy_sum,
             final_reports.tips_sum,
             final_reports.gas_sum,
@@ -107,62 +124,96 @@ app.get('/final-reports', (req, res) => {
             res.status(500).json({ error: err.message });
             return;
         }
+        console.log('Дані, повернуті з /final-reports:', rows);
         res.json(rows);
     });
 });
 
 app.post('/final-reports', (req, res) => {
-    const { job_number, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, reports, total_labor_cost } = req.body;
+    const { job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, reports, total_labor_cost } = req.body;
     if (!job_number || !reports || reports.length === 0) {
         return res.status(400).json({ error: "Job number and reports are required" });
     }
 
-    const report_date = new Date().toISOString().split('T')[0];
-    
-    db.run('BEGIN TRANSACTION', (beginErr) => {
-        if (beginErr) {
-            console.error('Помилка початку транзакції:', beginErr.message);
-            return res.status(500).json({ error: beginErr.message });
+    console.log('Вхідна report_date:', report_date);
+    let final_report_date;
+    if (report_date) {
+        const parsed = new Date(report_date);
+        if (isNaN(parsed.getTime())) {
+            return res.status(400).json({ error: "Invalid report_date" });
+        }
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        const hours = String(parsed.getHours()).padStart(2, '0');
+        const minutes = String(parsed.getMinutes()).padStart(2, '0');
+        final_report_date = `${year}-${month}-${day}T${hours}:${minutes}`;
+    } else {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        final_report_date = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    console.log('Збережена final_report_date:', final_report_date);
+
+    db.get('SELECT id FROM final_reports WHERE job_number = ?', [job_number], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        if (row) {
+            return res.status(400).json({ error: `Звіт з номером роботи '${job_number}' вже існує.` });
         }
 
-        db.run(`INSERT INTO final_reports (job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, 
-            [job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost || 0], 
-            function(insertErr) {
-                if (insertErr) {
-                    db.run('ROLLBACK');
-                    console.error('Помилка вставки в final_reports:', insertErr.message);
-                    return res.status(500).json({ error: insertErr.message });
-                }
+        db.run('BEGIN TRANSACTION', (beginErr) => {
+            if (beginErr) {
+                console.error('Помилка початку транзакції:', beginErr.message);
+                return res.status(500).json({ error: beginErr.message });
+            }
 
-                const final_report_id = this.lastID;
-                const stmt = db.prepare(`INSERT INTO report_entries (final_report_id, worker_id, hours_worked, actual_hourly_rate, additional_cost, heavy, tips, gas) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
-
-                const insertReportEntries = (index) => {
-                    if (index >= reports.length) {
-                        stmt.finalize();
-                        db.run('COMMIT', (commitErr) => {
-                            if (commitErr) {
-                                console.error('Помилка COMMIT:', commitErr.message);
-                                return res.status(500).json({ error: commitErr.message });
-                            }
-                            return res.status(201).json({ id: final_report_id, message: "Final report created successfully" });
-                        });
-                        return;
+            db.run(`INSERT INTO final_reports (job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [job_number, final_report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost || 0],
+                function(insertErr) {
+                    if (insertErr) {
+                        db.run('ROLLBACK');
+                        console.error('Помилка вставки в final_reports:', insertErr.message);
+                        return res.status(500).json({ error: insertErr.message });
                     }
 
-                    const report = reports[index];
-                    stmt.run(final_report_id, report.worker_id, report.hours_worked, report.actual_hourly_rate, report.additional_cost, report.heavy ? 1 : 0, report.tips ? 1 : 0, report.gas ? 1 : 0, (runErr) => {
-                        if (runErr) {
-                            db.run('ROLLBACK');
-                            console.error('Помилка вставки в report_entries:', runErr.message);
-                            return res.status(500).json({ error: runErr.message });
+                    const final_report_id = this.lastID;
+                    logAction('ADD_REPORT', `Додано звіт з номером ${job_number} (ID: ${final_report_id})`);
+
+                    const stmt = db.prepare(`INSERT INTO report_entries (final_report_id, worker_id, hours_worked, actual_hourly_rate, additional_cost, heavy, tips, gas) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+
+                    const insertReportEntries = (index) => {
+                        if (index >= reports.length) {
+                            stmt.finalize();
+                            db.run('COMMIT', (commitErr) => {
+                                if (commitErr) {
+                                    console.error('Помилка COMMIT:', commitErr.message);
+                                    return res.status(500).json({ error: commitErr.message });
+                                }
+                                return res.status(201).json({ id: final_report_id, message: "Final report created successfully" });
+                            });
+                            return;
                         }
-                        insertReportEntries(index + 1);
-                    });
-                };
-                
-                insertReportEntries(0);
-            });
+
+                        const report = reports[index];
+                        stmt.run(final_report_id, report.worker_id, report.hours_worked, report.actual_hourly_rate, report.additional_cost, report.heavy ? 1 : 0, report.tips ? 1 : 0, report.gas ? 1 : 0, (runErr) => {
+                            if (runErr) {
+                                db.run('ROLLBACK');
+                                console.error('Помилка вставки в report_entries:', runErr.message);
+                                return res.status(500).json({ error: runErr.message });
+                            }
+                            insertReportEntries(index + 1);
+                        });
+                    };
+                    
+                    insertReportEntries(0);
+                });
+        });
     });
 });
 
@@ -184,7 +235,7 @@ app.get('/final-reports/:id', (req, res) => {
             }
             reportData.report = reportRow;
 
-            db.all(`SELECT report_entries.*, workers.name AS worker_name, workers.phone_number 
+            db.all(`SELECT report_entries.*, workers.name AS worker_name, workers.phone_number, workers.email 
                     FROM report_entries 
                     LEFT JOIN workers ON report_entries.worker_id = workers.id 
                     WHERE final_report_id = ?`, 
@@ -194,42 +245,45 @@ app.get('/final-reports/:id', (req, res) => {
                         return res.status(500).json({ error: err.message });
                     }
                     reportData.entries = entries;
+                    console.log('Дані, повернуті з /final-reports/:id:', reportData);
                     res.json(reportData);
                 });
         });
 });
 
 app.post('/workers', (req, res) => {
-    const { name, phone_number, default_hourly_rate } = req.body;
+    const { name, phone_number, email, default_hourly_rate } = req.body;
     if (!name || !default_hourly_rate) {
         res.status(400).json({ error: "Name and default_hourly_rate are required" });
         return;
     }
-    db.run(`INSERT INTO workers (name, phone_number, default_hourly_rate) VALUES (?, ?, ?)`,
-        [name, phone_number || null, default_hourly_rate],
+    db.run(`INSERT INTO workers (name, phone_number, email, default_hourly_rate) VALUES (?, ?, ?, ?)`,
+        [name, phone_number || null, email || null, default_hourly_rate],
         function(err) {
             if (err) {
                 res.status(500).json({ error: err.message });
                 return;
             }
+            logAction('ADD_WORKER', `Додано працівника ${name} (ID: ${this.lastID})`);
             res.status(201).json({ id: this.lastID, name });
         });
 });
 
 app.put('/workers/:id', (req, res) => {
     const { id } = req.params;
-    const { name, phone_number, default_hourly_rate } = req.body;
+    const { name, phone_number, email, default_hourly_rate } = req.body;
     if (!name || !default_hourly_rate) {
         res.status(400).json({ error: "Name and default_hourly_rate are required" });
         return;
     }
-    db.run(`UPDATE workers SET name = ?, phone_number = ?, default_hourly_rate = ? WHERE id = ?`,
-        [name, phone_number || null, default_hourly_rate, id],
+    db.run(`UPDATE workers SET name = ?, phone_number = ?, email = ?, default_hourly_rate = ? WHERE id = ?`,
+        [name, phone_number || null, email || null, default_hourly_rate, id],
         function(err) {
             if (err) {
                 res.status(500).json({ error: err.message });
                 return;
             }
+            logAction('UPDATE_WORKER', `Оновлено працівника з ID ${id}: ${name}`);
             res.status(200).json({ updatedID: id });
         });
 });
@@ -237,28 +291,40 @@ app.put('/workers/:id', (req, res) => {
 app.delete('/final-reports/:id', (req, res) => {
     const { id } = req.params;
 
-    db.run('BEGIN TRANSACTION', (beginErr) => {
-        if (beginErr) {
-            return res.status(500).json({ error: beginErr.message });
+    db.get(`SELECT job_number FROM final_reports WHERE id = ?`, [id], (err, row) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        if (!row) {
+            res.status(404).json({ error: "Report not found" });
+            return;
         }
 
-        db.run(`DELETE FROM report_entries WHERE final_report_id = ?`, id, (deleteEntriesErr) => {
-            if (deleteEntriesErr) {
-                db.run('ROLLBACK');
-                return res.status(500).json({ error: deleteEntriesErr.message });
+        db.run('BEGIN TRANSACTION', (beginErr) => {
+            if (beginErr) {
+                return res.status(500).json({ error: beginErr.message });
             }
 
-            db.run(`DELETE FROM final_reports WHERE id = ?`, id, (deleteReportErr) => {
-                if (deleteReportErr) {
+            db.run(`DELETE FROM report_entries WHERE final_report_id = ?`, id, (deleteEntriesErr) => {
+                if (deleteEntriesErr) {
                     db.run('ROLLBACK');
-                    return res.status(500).json({ error: deleteReportErr.message });
+                    return res.status(500).json({ error: deleteEntriesErr.message });
                 }
 
-                db.run('COMMIT', (commitErr) => {
-                    if (commitErr) {
-                        return res.status(500).json({ error: commitErr.message });
+                db.run(`DELETE FROM final_reports WHERE id = ?`, id, (deleteReportErr) => {
+                    if (deleteReportErr) {
+                        db.run('ROLLBACK');
+                        return res.status(500).json({ error: deleteReportErr.message });
                     }
-                    res.status(200).json({ message: "Звіт успішно видалено" });
+
+                    db.run('COMMIT', (commitErr) => {
+                        if (commitErr) {
+                            return res.status(500).json({ error: commitErr.message });
+                        }
+                        logAction('DELETE_REPORT', `Видалено звіт з номером ${row.job_number} (ID: ${id})`);
+                        res.status(200).json({ message: "Звіт успішно видалено" });
+                    });
                 });
             });
         });
@@ -267,12 +333,46 @@ app.delete('/final-reports/:id', (req, res) => {
 
 app.delete('/workers/:id', (req, res) => {
     const { id } = req.params;
-    db.run(`DELETE FROM workers WHERE id = ?`, id, function(err) {
+
+    db.get(`SELECT name FROM workers WHERE id = ?`, [id], (err, row) => {
         if (err) {
             res.status(500).json({ error: err.message });
             return;
         }
-        res.status(200).json({ deletedID: id });
+        if (!row) {
+            res.status(404).json({ error: "Worker not found" });
+            return;
+        }
+
+        db.run(`DELETE FROM workers WHERE id = ?`, id, function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            logAction('DELETE_WORKER', `Видалено працівника ${row.name} (ID: ${id})`);
+            res.status(200).json({ deletedID: id });
+        });
+    });
+});
+
+app.get('/logs', (req, res) => {
+    db.all(`SELECT action, details, timestamp FROM logs ORDER BY timestamp DESC`, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
+app.delete('/logs', (req, res) => {
+    db.run(`DELETE FROM logs`, (err) => {
+        if (err) {
+            console.error('Помилка при очищенні логу:', err.message);
+            return res.status(500).json({ error: err.message });
+        }
+        logAction('CLEAR_LOGS', 'Всі записи логу очищено');
+        res.status(200).json({ message: "Лог успішно очищено" });
     });
 });
 

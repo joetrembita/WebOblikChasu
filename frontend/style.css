@@ -218,3 +218,166 @@ tr:hover {
     width: 60%;
     margin-right: 10px;
 }
+
+.watermark {
+    font-size: 12 px;
+    color: #888;
+    text-align: center;
+    margin-top: 20px;
+    opacity: 0.6;
+}
+
+.watermark {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-top: 20px;
+    opacity: 0.2;
+    transition: opacity 0.3s ease;
+}
+
+.watermark:hover {
+    opacity: 1;
+}
+
+.watermark {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-top: 20px;
+    opacity: 0.2;
+    transition: opacity 0.3s ease;
+}
+
+.watermark:hover {
+    opacity: 1;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.navigation-buttons {
+    margin-bottom: 20px;
+}
+
+.main-button {
+    display: inline-block;
+    padding: 10px 20px;
+    margin-right: 10px;
+    background-color: #007bff;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+}
+
+.main-button:hover {
+    background-color: #0056b3;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+h1, h3, h4 {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+.form-group.horizontal {
+    display: flex;
+    gap: 20px;
+}
+
+.input-group {
+    flex: 1;
+}
+
+.checkbox-group {
+    margin-bottom: 15px;
+}
+
+.checkbox-group label {
+    margin-right: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+.action-buttons button {
+    padding: 5px 10px;
+    margin-right: 5px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.view-details-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.view-details-btn:hover {
+    background-color: #0056b3;
+}
+
+.delete-btn, #delete-detailed-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-btn:hover, #delete-detailed-btn:hover {
+    background-color: #c82333;
+}
+
+.submit-button {
+    display: block;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.submit-button:hover {
+    background-color: #218838;
+}

@@ -8,9 +8,9 @@
 </head>
 <body>
     <div class="navigation-buttons">
-        <a href="paytypes.html" class="main-button">Керувати типами оплати</a>
         <a href="workers.html" class="main-button">Керувати працівниками</a>
         <a href="reports.html" class="main-button">Переглянути звіти</a>
+        <a href="logs.html" class="main-button">Переглянути лог</a>
     </div>
 
     <div id="final-report-container">
@@ -19,6 +19,10 @@
             <div class="form-group">
                 <label for="job-number-input">Номер роботи:</label>
                 <input type="text" id="job-number-input" name="job_number" required>
+            </div>
+            <div class="form-group">
+                <label for="report-date-input">Дата і час:</label>
+                <input type="datetime-local" id="report-date-input" name="report_date" required>
             </div>
             <div class="form-group horizontal">
                 <div class="input-group">
@@ -64,7 +68,7 @@
             </div>
             <div class="form-group">
                 <label for="hours-input">Години роботи:</label>
-                <input type="number" id="hours-input" name="hours_worked" min="0" step="0.1" required>
+                    <input type="number" id="hours-input" name="hours_worked" min="0" step="0.25" required>
             </div>
             <div class="form-group">
                 <label for="rate-input">Ставка за годину:</label>
@@ -99,6 +103,8 @@
         </table>
         
         <button type="submit" form="final-report-form" class="submit-button">Сформувати звіт</button>
+        
+        <div class="watermark">Created by Joe Trembita</div>
     </div>
 
     <script src="app.js?v=2"></script>

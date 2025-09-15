@@ -4,17 +4,16 @@ document.addEventListener('DOMContentLoaded', () => {
     loadWorkers();
 });
 
-// Функція для завантаження та відображення працівників
 async function loadWorkers() {
     try {
         const response = await fetch(`${backendUrl}/workers`);
         const workers = await response.json();
         const workersTableBody = document.querySelector('#workers-table tbody');
 
-        workersTableBody.innerHTML = ''; // Очищаємо таблицю
+        workersTableBody.innerHTML = '';
 
         if (workers.length === 0) {
-            workersTableBody.innerHTML = '<tr><td colspan="4">Немає збережених працівників.</td></tr>';
+            workersTableBody.innerHTML = '<tr><td colspan="5">Немає збережених працівників.</td></tr>';
             return;
         }
 
@@ -33,6 +32,10 @@ async function loadWorkers() {
                     <span class="worker-display phone">${worker.phone_number || 'Не вказано'}</span>
                     <input type="text" class="edit-phone-input hidden" value="${worker.phone_number || ''}">
                 </td>
+                <td>
+                    <span class="worker-display email">${worker.email || 'Не вказано'}</span>
+                    <input type="email" class="edit-email-input hidden" value="${worker.email || ''}">
+                </td>
                 <td class="action-buttons">
                     <button class="edit-btn" data-id="${worker.id}">Редагувати</button>
                     <button class="save-btn hidden" data-id="${worker.id}">Зберегти</button>
@@ -43,7 +46,6 @@ async function loadWorkers() {
             workersTableBody.appendChild(tr);
         });
 
-        // Додаємо обробники подій
         document.querySelectorAll('.edit-btn').forEach(btn => btn.addEventListener('click', toggleEditMode));
         document.querySelectorAll('.save-btn').forEach(btn => btn.addEventListener('click', updateWorker));
         document.querySelectorAll('.cancel-btn').forEach(btn => btn.addEventListener('click', toggleEditMode));
@@ -53,7 +55,6 @@ async function loadWorkers() {
     }
 }
 
-// Функція для додавання нового працівника
 document.getElementById('add-worker-form').addEventListener('submit', async (event) => {
     event.preventDefault();
 
@@ -61,6 +62,7 @@ document.getElementById('add-worker-form').addEventListener('submit', async (eve
     const formData = {
         name: form.name.value,
         phone_number: form.phone_number.value || null,
+        email: form.email.value || null,
         default_hourly_rate: parseFloat(form.default_hourly_rate.value)
     };
 
@@ -84,7 +86,6 @@ document.getElementById('add-worker-form').addEventListener('submit', async (eve
     }
 });
 
-// Функція для видалення працівника
 async function deleteWorker(event) {
     const workerId = event.target.dataset.id;
 
@@ -98,7 +99,7 @@ async function deleteWorker(event) {
         });
 
         if (response.ok) {
-            loadWorkers(); // Оновлюємо список
+            loadWorkers();
         } else {
             alert('Помилка при видаленні працівника.');
         }
@@ -107,32 +108,30 @@ async function deleteWorker(event) {
     }
 }
 
-// Перемикає режим редагування
 function toggleEditMode(event) {
     const row = event.target.closest('tr');
-    row.querySelectorAll('.worker-display, .edit-name-input, .edit-rate-input, .edit-phone-input, .edit-btn, .save-btn, .cancel-btn, .delete-btn').forEach(element => {
+    row.querySelectorAll('.worker-display, .edit-name-input, .edit-rate-input, .edit-phone-input, .edit-email-input, .edit-btn, .save-btn, .cancel-btn, .delete-btn').forEach(element => {
         element.classList.toggle('hidden');
     });
 }
 
-// Функція для оновлення працівника
-// Функція для оновлення працівника
 async function updateWorker(event) {
     const workerId = event.target.dataset.id;
     const row = event.target.closest('tr');
     const name = row.querySelector('.edit-name-input').value;
     const rate = row.querySelector('.edit-rate-input').value;
     const phone = row.querySelector('.edit-phone-input').value || null;
+    const email = row.querySelector('.edit-email-input').value || null;
 
     try {
         const response = await fetch(`${backendUrl}/workers/${workerId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, default_hourly_rate: parseFloat(rate), phone_number: phone })
+            body: JSON.stringify({ name, default_hourly_rate: parseFloat(rate), phone_number: phone, email })
         });
         
         if (response.ok) {
-            loadWorkers(); // Перезавантажуємо всіх працівників, щоб оновити таблицю
+            loadWorkers();
         } else {
             alert('Помилка при редагуванні працівника.');
         }
