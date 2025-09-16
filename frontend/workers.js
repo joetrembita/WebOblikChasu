@@ -22,19 +22,19 @@ async function loadWorkers() {
             tr.innerHTML = `
                 <td>
                     <span class="worker-display name">${worker.name}</span>
-                    <input type="text" class="edit-name-input hidden" value="${worker.name}">
+                    <input type="text" class="edit-name-input hidden" value="${worker.name}" readonly>
                 </td>
                 <td>
                     <span class="worker-display rate">${worker.default_hourly_rate}</span>
-                    <input type="number" class="edit-rate-input hidden" value="${worker.default_hourly_rate}">
+                    <input type="number" class="edit-rate-input hidden" value="${worker.default_hourly_rate}" readonly>
                 </td>
                 <td>
                     <span class="worker-display phone">${worker.phone_number || 'Не вказано'}</span>
-                    <input type="text" class="edit-phone-input hidden" value="${worker.phone_number || ''}">
+                    <input type="text" class="edit-phone-input hidden" value="${worker.phone_number || ''}" readonly>
                 </td>
                 <td>
                     <span class="worker-display email">${worker.email || 'Не вказано'}</span>
-                    <input type="email" class="edit-email-input hidden" value="${worker.email || ''}">
+                    <input type="email" class="edit-email-input hidden" value="${worker.email || ''}" readonly>
                 </td>
                 <td class="action-buttons">
                     <button class="edit-btn" data-id="${worker.id}">Редагувати</button>
@@ -110,9 +110,17 @@ async function deleteWorker(event) {
 
 function toggleEditMode(event) {
     const row = event.target.closest('tr');
-    row.querySelectorAll('.worker-display, .edit-name-input, .edit-rate-input, .edit-phone-input, .edit-email-input, .edit-btn, .save-btn, .cancel-btn, .delete-btn').forEach(element => {
-        element.classList.toggle('hidden');
+    const isEdit = !row.querySelector('.edit-btn').classList.contains('hidden');
+    // Всі поля readonly, поки не редагуємо
+    row.querySelectorAll('.worker-display').forEach(el => el.classList.toggle('hidden', isEdit));
+    row.querySelectorAll('.edit-name-input, .edit-rate-input, .edit-phone-input, .edit-email-input').forEach(el => {
+        el.classList.toggle('hidden', !isEdit);
+        el.readOnly = !isEdit;
     });
+    row.querySelector('.edit-btn').classList.toggle('hidden', isEdit);
+    row.querySelector('.save-btn').classList.toggle('hidden', !isEdit);
+    row.querySelector('.cancel-btn').classList.toggle('hidden', !isEdit);
+    row.querySelector('.delete-btn').classList.toggle('hidden', isEdit);
 }
 
 async function updateWorker(event) {

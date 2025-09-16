@@ -32,6 +32,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     loadReports();
+
+    // Додаємо обробник для кнопки створення звіту
+    const createBtn = document.getElementById('create-report-btn');
+    if (createBtn) {
+        createBtn.addEventListener('click', () => {
+            window.location.href = 'edit-report.html';
+        });
+    }
 });
 
 async function loadReports() {
@@ -58,14 +66,13 @@ async function loadReports() {
         }
 
         finalReports.forEach(report => {
-            const totalPayment = (report.cash_sum + report.zelle_sum + report.cc_sum + report.venmo_sum).toFixed(2);
-            const paymentBreakdown = `Cash: ${report.cash_sum.toFixed(2)}, Zelle: ${report.zelle_sum.toFixed(2)}, CC: ${report.cc_sum.toFixed(2)}, Venmo: ${report.venmo_sum.toFixed(2)}`;
+            const totalCost = report.total_cost == null ? 0 : report.total_cost;
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${report.job_number}</td>
                 <td>${report.worker_count}</td>
-                <td>${(report.total_cost).toFixed(2)}</td>
-                <td>${totalPayment} (${paymentBreakdown})</td>
+                <td>${(totalCost).toFixed(2)}</td>
+                <td>${report.cash_sum != null ? report.cash_sum.toFixed(2) : '0.00'}</td>
                 <td>${formatDate(report.report_date)}</td>
                 <td class="action-buttons">
                     <button class="view-details-btn" data-id="${report.id}">Переглянути</button>
@@ -153,6 +160,14 @@ async function showReportDetails(reportId) {
         
         document.getElementById('delete-detailed-btn').dataset.id = reportId;
         document.getElementById('delete-detailed-btn').addEventListener('click', deleteReport);
+
+        // Додаємо обробник для кнопки редагування
+        const editBtn = document.getElementById('edit-detailed-btn');
+        if (editBtn) {
+            editBtn.onclick = () => {
+                window.location.href = `edit-report.html?id=${reportId}`;
+            };
+        }
     } catch (error) {
         console.error('Помилка при завантаженні деталей звіту:', error);
     }
