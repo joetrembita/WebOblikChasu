@@ -142,21 +142,20 @@ document.getElementById('add-to-report-form').addEventListener('submit', (event)
     event.preventDefault();
 
     const form = document.getElementById('add-to-report-form');
-    const formData = {
-        worker_id: form.worker_id.value,
-        hours_worked: parseFloat(form.hours_worked.value),
-        actual_hourly_rate: parseFloat(form.actual_hourly_rate.value),
-        heavy: form.querySelector('input[name="heavy"]').checked,
-        tips: form.querySelector('input[name="tips"]').checked,
-        gas: form.querySelector('input[name="gas"]').checked
-    };
-
-    if (!formData.worker_id || !formData.hours_worked || !formData.actual_hourly_rate) {
-        alert('Будь ласка, заповніть усі обов’язкові поля.');
+    const workerId = form.worker_id.value;
+    if (!workerId) {
+        alert('Оберіть працівника.');
         return;
     }
-
-    tempReports.push(formData);
+    // Додаємо працівника з дефолтними значеннями
+    tempReports.push({
+        worker_id: workerId,
+        hours_worked: 0,
+        actual_hourly_rate: 0,
+        heavy: false,
+        tips: false,
+        gas: false
+    });
     renderTempReports();
     form.reset();
     loadWorkers();
