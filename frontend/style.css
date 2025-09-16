@@ -133,29 +133,36 @@ tr:hover {
 
 .navigation-buttons {
     display: flex;
-    flex-direction: row;
-    gap: 15px;
-    flex-wrap: wrap;
     justify-content: center;
     align-items: center;
-    margin-bottom: 20px;
+    gap: 0;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    margin-bottom: 32px;
+    padding: 0;
 }
 
 .main-button, .back-link {
-    display: inline-block;
-    padding: 15px;
-    background-color: #4CAF50;
-    color: white;
-    text-align: center;
+    display: block;
+    padding: 18px 36px;
+    background: none;
+    color: #222;
     text-decoration: none;
-    font-size: 1.2rem;
-    border-radius: 8px;
-    transition: background-color 0.3s ease;
-    width: 250px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border: none;
+    border-right: 1px solid #eee;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+    outline: none;
+    width: auto;
 }
 
 .main-button:hover, .back-link:hover {
-    background-color: #45a049;
+    background: #007bff;
+    color: #fff;
 }
 
 #reports-table-container {
@@ -264,17 +271,24 @@ tr:hover {
 }
 
 .main-button {
-    display: inline-block;
-    padding: 10px 20px;
-    margin-right: 10px;
-    background-color: #007bff;
-    color: white;
+    display: block;
+    padding: 18px 36px;
+    background: none;
+    color: #222;
     text-decoration: none;
-    border-radius: 5px;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border: none;
+    border-right: 1px solid #eee;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+    outline: none;
+    width: auto;
 }
 
 .main-button:hover {
-    background-color: #0056b3;
+    background: #007bff;
+    color: #fff;
 }
 
 .back-link {
@@ -302,12 +316,47 @@ h1, h3, h4 {
 }
 
 .form-group input, .form-group select {
-    width: 100%;
-    padding: 8px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-}
+    width: 220px;
+    max-width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    background: #f9f9f9;
+    transition: border 0.2s;
 
+input[type="number"]:focus, input[type="text"]:focus, select:focus {
+    border: 1.5px solid #007bff;
+    outline: none;
+    background: #fff;
+}
+form, .form-group, .input-group {
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+@media (max-width: 600px) {
+    .navigation-buttons {
+        flex-direction: column;
+        border-radius: 0 0 8px 8px;
+    }
+    .main-button {
+        border-right: none;
+        border-bottom: 1px solid #eee;
+        width: 100%;
+        padding: 16px 0;
+    }
+    .main-button:last-child {
+        border-bottom: none;
+    }
+    form, .form-group, .input-group {
+        max-width: 98vw;
+    }
+    input[type="number"], input[type="text"], select {
+        width: 100%;
+    }
+}
 .form-group.horizontal {
     display: flex;
     gap: 20px;
