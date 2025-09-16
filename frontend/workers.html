@@ -7,8 +7,9 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <a href="index.html" class="back-link">← Повернутися до звітів</a>
+    <div class="main-layout">
+        <div id="sidebar"></div>
+        <div class="container">
         <h1>Довідник працівників</h1>
 
         <form id="add-worker-form">
@@ -51,6 +52,14 @@
         </div>
     </div>
     <div class="watermark">Created by Joe Trembita</div>
-    <script src="workers.js"></script>
+        <script src="workers.js"></script>
+        <script>
+        // Динамічне підключення спільного меню
+        fetch('sidebar.html')
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('sidebar').innerHTML = html;
+            });
+        </script>
 </body>
 </html>

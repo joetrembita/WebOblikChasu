@@ -7,12 +7,9 @@
     <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
-    <div class="container">
-        <div class="navigation-buttons">
-            <a href="index.html" class="main-button">Створити звіт</a>
-            <a href="workers.html" class="main-button">Керувати працівниками</a>
-            <a href="reports.html" class="main-button">Переглянути звіти</a>
-        </div>
+    <div class="main-layout">
+        <div id="sidebar"></div>
+        <div class="container">
         <h1>Лог дій</h1>
         
         <div id="logs-table-container">
@@ -30,6 +27,14 @@
         </div>
         <button id="clear-logs-btn" class="submit-button">Очистити лог</button>
     </div>
-    <script src="logs.js?v=2"></script>
+        <script src="logs.js?v=2"></script>
+        <script>
+        // Динамічне підключення спільного меню
+        fetch('sidebar.html')
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('sidebar').innerHTML = html;
+            });
+        </script>
 </body>
 </html>

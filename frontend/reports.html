@@ -7,12 +7,9 @@
     <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
-    <div class="container">
-        <div class="navigation-buttons">
-            <a href="index.html" class="main-button">Створити звіт</a>
-            <a href="workers.html" class="main-button">Керувати працівниками</a>
-            <a href="logs.html" class="main-button">Переглянути лог</a>
-        </div>
+    <div class="main-layout">
+        <div id="sidebar"></div>
+        <div class="container">
         <h1>Звіти</h1>
         
         <div id="main-reports-view">
@@ -64,6 +61,14 @@
         </div>
     </div>
     <div class="watermark">Created by Joe Trembita</div>
-    <script src="reports.js?v=2"></script>
+        <script src="reports.js?v=2"></script>
+        <script>
+        // Динамічне підключення спільного меню
+        fetch('sidebar.html')
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('sidebar').innerHTML = html;
+            });
+        </script>
 </body>
 </html>
