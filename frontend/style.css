@@ -1,3 +1,40 @@
+/* --- Меню фільтрації для salary-form --- */
+.filter-menu {
+    position: absolute;
+    background: #fff;
+    border: 1.5px solid #2563eb;
+    border-radius: 10px;
+    padding: 12px 16px;
+    z-index: 10000;
+    max-height: 320px;
+    overflow-y: auto;
+    box-shadow: 0 4px 24px rgba(37,99,235,0.13);
+    font-size: 1em;
+    min-width: 180px;
+    min-height: 40px;
+    top: 36px;
+    left: 0;
+}
+.filter-menu label {
+    display: block;
+    margin-bottom: 6px;
+    cursor: pointer;
+    font-size: 1em;
+}
+.filter-menu button {
+    margin-top: 10px;
+    background: #eaf1fb;
+    color: #2563eb;
+    border: 1px solid #2563eb;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 1em;
+    cursor: pointer;
+}
+.filter-menu button:hover {
+    background: #2563eb;
+    color: #fff;
+}
 /* Рядок для Heavy/Tips/Gas */
 #edit-report-form .extra-row {
     display: flex;
@@ -62,8 +99,8 @@ body {
     margin: 0;
     padding: 0;
 }
-
 .main-layout {
+/* end of @media (max-width: 600px) */
     display: flex;
     flex-direction: row;
     align-items: flex-start;
@@ -245,15 +282,7 @@ th, td {
     padding: 14px 12px;
     text-align: left;
 }
-th {
-    background: #f3f6fa;
-    color: #222;
-    font-weight: 600;
-    font-size: 1.04em;
-}
-tr:nth-child(even) td {
-    background: #f8fafc;
-}
+
 tr:hover td {
     background: #eaf1fb;
 }
@@ -599,24 +628,6 @@ table {
     width: 100%;
     border-collapse: collapse;
     margin-bottom: 20px;
-}
-
-th, td {
-    border: 1px solid #ddd;
-    padding: 8px;
-    text-align: left;
-}
-
-th {
-    background-color: #f2f2f2;
-}
-
-.action-buttons button {
-    padding: 5px 10px;
-    margin-right: 5px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
 }
 
 .view-details-btn {

@@ -31,9 +31,14 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error("Елемент 'back-to-reports-link' не знайдено.");
     }
 
-    loadReports();
+    const urlParams = new URLSearchParams(window.location.search);
+    const openId = urlParams.get('open');
+    if (openId) {
+        showReportDetails(openId);
+    } else {
+        loadReports();
+    }
 
-    // Додаємо обробник для кнопки створення звіту
     const createBtn = document.getElementById('create-report-btn');
     if (createBtn) {
         createBtn.addEventListener('click', () => {
@@ -161,11 +166,57 @@ async function showReportDetails(reportId) {
         document.getElementById('delete-detailed-btn').dataset.id = reportId;
         document.getElementById('delete-detailed-btn').addEventListener('click', deleteReport);
 
-        // Додаємо обробник для кнопки редагування
         const editBtn = document.getElementById('edit-detailed-btn');
         if (editBtn) {
             editBtn.onclick = () => {
                 window.location.href = `edit-report.html?id=${reportId}`;
+            };
+        }
+
+        const approveBtn = document.getElementById('approve-detailed-btn');
+        if (approveBtn) {
+            approveBtn.onclick = async () => {
+                try {
+                    const logResponse = await fetch(`${backendUrl}/logs`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            action: 'APPROVE_REPORT',
+                            details: `approved №${report.job_number}`
+                        })
+                    });
+                    if (!logResponse.ok) {
+                        const errorData = await logResponse.json();
+                        throw new Error(`HTTP error! Status: ${logResponse.status}, Message: ${errorData.error || 'Unknown error'}`);
+                    }
+                    console.log('Лог успішно створено для APPROVE_REPORT');
+                } catch (error) {
+                    console.error('Помилка при логуванні дії Approved:', error);
+                    alert('Помилка при логуванні схвалення звіту. Схвалення все одно виконається.');
+                }
+
+                const existingEntries = JSON.parse(localStorage.getItem('approvedSalaryEntries') || '[]');
+                const existingJobNumbers = new Set(existingEntries.map(e => e.job_number));
+
+                if (existingJobNumbers.has(report.job_number)) {
+                    alert(`Звіт з номером роботи ${report.job_number} вже був апрувлений.`);
+                    return;
+                }
+
+                const existingIds = new Set(existingEntries.map(e => e.id));
+                const newEntries = reportData.entries
+                    .filter(entry => entry.worker_name && !existingIds.has(entry.id))
+                    .map(entry => ({
+                        ...entry,
+                        job_number: report.job_number,
+                        sum: (entry.hours_worked * entry.actual_hourly_rate + (entry.heavy ? perHeavy : 0) + (entry.tips ? perTips : 0) + (entry.gas ? perGas : 0)).toFixed(2)
+                    }));
+
+                const updatedEntries = newEntries.concat(existingEntries);
+                localStorage.setItem('approvedSalaryEntries', JSON.stringify(updatedEntries));
+                window.open('salary-form.html', '_blank');
             };
         }
     } catch (error) {
@@ -179,7 +230,7 @@ async function deleteReport(event) {
 
     if (confirmDelete) {
         try {
-            const response = await fetch(`${backwardUrl}/final-reports/${reportId}`, {
+            const response = await fetch(`${backendUrl}/final-reports/${reportId}`, {
                 method: 'DELETE'
             });
 

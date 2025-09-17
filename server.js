@@ -9,6 +9,37 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static('frontend'));
 
+// Отримати всі нарахування зарплат (JOIN final_reports, report_entries, workers)
+app.get('/salary-entries', (req, res) => {
+    const sql = `
+        SELECT report_entries.id, final_reports.job_number, final_reports.report_date, workers.name AS worker_name, report_entries.hours_worked, report_entries.actual_hourly_rate, report_entries.additional_cost, report_entries.heavy, report_entries.tips, report_entries.gas, report_entries.paid
+        FROM report_entries
+        LEFT JOIN final_reports ON report_entries.final_report_id = final_reports.id
+        LEFT JOIN workers ON report_entries.worker_id = workers.id
+        ORDER BY final_reports.report_date DESC, final_reports.job_number DESC, report_entries.id DESC
+    `;
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
+
+// Оновити статус paid для конкретного запису report_entries
+app.put('/salary-entries/:id/paid', (req, res) => {
+    const { id } = req.params;
+    const { paid } = req.body;
+    db.run('UPDATE report_entries SET paid = ? WHERE id = ?', [paid ? 1 : 0, id], function(err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.status(200).json({ id, paid: paid ? 1 : 0 });
+    });
+});
+
 const db = new sqlite3.Database('./database.db', (err) => {
     if (err) {
         console.error(err.message);
@@ -49,6 +80,7 @@ db.serialize(() => {
         heavy INTEGER DEFAULT 0,
         tips INTEGER DEFAULT 0,
         gas INTEGER DEFAULT 0,
+        paid INTEGER DEFAULT 0,
         FOREIGN KEY (final_report_id) REFERENCES final_reports(id),
         FOREIGN KEY (worker_id) REFERENCES workers(id)
     )`);
@@ -217,6 +249,57 @@ app.post('/final-reports', (req, res) => {
     });
 });
 
+// Оновлення фінального звіту (PUT /final-reports/:id)
+app.put('/final-reports/:id', (req, res) => {
+    const { id } = req.params;
+    const { job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, reports, total_labor_cost } = req.body;
+    if (!job_number || !reports || reports.length === 0) {
+        return res.status(400).json({ error: "Job number and reports are required" });
+    }
+
+    db.run('BEGIN TRANSACTION', (beginErr) => {
+        if (beginErr) {
+            return res.status(500).json({ error: beginErr.message });
+        }
+        db.run(`UPDATE final_reports SET job_number = ?, report_date = ?, cash_sum = ?, zelle_sum = ?, cc_sum = ?, venmo_sum = ?, heavy_sum = ?, tips_sum = ?, gas_sum = ?, total_labor_cost = ? WHERE id = ?`,
+            [job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost || 0, id],
+            function(updateErr) {
+                if (updateErr) {
+                    db.run('ROLLBACK');
+                    return res.status(500).json({ error: updateErr.message });
+                }
+                db.run(`DELETE FROM report_entries WHERE final_report_id = ?`, [id], function(deleteErr) {
+                    if (deleteErr) {
+                        db.run('ROLLBACK');
+                        return res.status(500).json({ error: deleteErr.message });
+                    }
+                    const stmt = db.prepare(`INSERT INTO report_entries (final_report_id, worker_id, hours_worked, actual_hourly_rate, additional_cost, heavy, tips, gas) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+                    const insertEntries = (index) => {
+                        if (index >= reports.length) {
+                            stmt.finalize();
+                            db.run('COMMIT', (commitErr) => {
+                                if (commitErr) {
+                                    return res.status(500).json({ error: commitErr.message });
+                                }
+                                return res.status(200).json({ id, message: "Final report updated successfully" });
+                            });
+                            return;
+                        }
+                        const report = reports[index];
+                        stmt.run(id, report.worker_id, report.hours_worked, report.actual_hourly_rate, report.additional_cost || 0, report.heavy ? 1 : 0, report.tips ? 1 : 0, report.gas ? 1 : 0, (runErr) => {
+                            if (runErr) {
+                                db.run('ROLLBACK');
+                                return res.status(500).json({ error: runErr.message });
+                            }
+                            insertEntries(index + 1);
+                        });
+                    };
+                    insertEntries(0);
+                });
+            });
+    });
+});
+
 app.get('/final-reports/:id', (req, res) => {
     const reportId = req.params.id;
     const reportData = {};
@@ -374,6 +457,15 @@ app.delete('/logs', (req, res) => {
         logAction('CLEAR_LOGS', 'Всі записи логу очищено');
         res.status(200).json({ message: "Лог успішно очищено" });
     });
+});
+
+app.post('/logs', (req, res) => {
+    const { action, details } = req.body;
+    if (!action || !details) {
+        return res.status(400).json({ error: "Action and details are required" });
+    }
+    logAction(action, details);
+    res.status(201).json({ message: "Log entry created successfully" });
 });
 
 app.listen(port, () => {

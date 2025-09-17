@@ -165,22 +165,27 @@ document.addEventListener('DOMContentLoaded', () => {
             }))
         };
         try {
-            let res;
+            let res, savedId;
             if (reportId) {
                 res = await fetch(`${backendUrl}/final-reports/${reportId}`, {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(body)
                 });
+                savedId = reportId;
             } else {
                 res = await fetch(`${backendUrl}/final-reports`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(body)
                 });
+                if (res.ok) {
+                    const data = await res.json();
+                    savedId = data.id;
+                }
             }
-            if (res.ok) {
-                window.location.href = 'reports.html';
+            if (res.ok && savedId) {
+                window.location.href = `reports.html?open=${encodeURIComponent(savedId)}`;
             } else {
                 alert('Помилка при збереженні звіту');
             }
