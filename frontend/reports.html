@@ -3,28 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Звіти</title>
+    <title>Brakedowns</title>
     <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
     <div class="main-layout">
         <div id="sidebar"></div>
         <div class="container">
-    <h1>Звіти</h1>
-    <button id="create-report-btn" class="submit-button" style="margin-bottom:18px;">Створити звіт</button>
+    <h1>Brakedowns</h1>
+    <button id="create-report-btn" class="submit-button" style="margin-bottom:18px;">Add brakedown</button>
         
         <div id="main-reports-view">
-            <h3>Зведені звіти</h3>
+            <h3>Brakedowns</h3>
             <div id="reports-table-container">
                 <table>
                     <thead>
                         <tr>
-                            <th>Номер роботи</th>
-                            <th>Кількість працівників</th>
-                            <th>Загальна сума</th>
+                            <th>Job number</th>
+                            <th>Crew size</th>
+                            <th>Total payments</th>
                             <th>Cash</th>
-                            <th>Дата</th>
-                            <th>Дії</th>
+                            <th>Date</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -34,33 +34,33 @@
         </div>
         
         <div id="report-details-view" style="display: none;">
-            <a href="#" id="back-to-reports-link">← Назад до звітів</a>
+            <a href="#" id="back-to-reports-link">← Back</a>
             <h3 id="report-details-title"></h3>
             
             <div id="report-summary-info"></div>
 
-            <h4>Дійові особи</h4>
+            <h4>Crew</h4>
             <div id="report-entries-table-container">
                 <table id="report-entries-table">
                     <thead>
                         <tr>
-                            <th>Працівник</th>
-                            <th>Телефон</th>
-                            <th>Години</th>
-                            <th>Ставка</th>
+                            <th>Name</th>
+                            <th>Phone</th>
+                            <th>Hours</th>
+                            <th>Rate</th>
                             <th>Heavy</th>
                             <th>Tips</th>
                             <th>Gas</th>
-                            <th>Сума</th>
+                            <th>Total</th>
                         </tr>
                     </thead>
                     <tbody>
                     </tbody>
                 </table>
             </div>
-            <button id="edit-detailed-btn">Редагувати</button>
-            <button id="delete-detailed-btn">Видалити звіт</button>
-            <button id="approve-detailed-btn" class="submit-button" style="margin-left:12px;">Approved</button>
+            <button id="edit-detailed-btn">Edit</button>
+            <button id="delete-detailed-btn">Delete brakedown</button>
+            <button id="approve-detailed-btn" class="submit-button" style="margin-left:12px;">Create payroll</button>
         </div>
     </div>
     <div class="watermark">Created by Joe Trembita</div>

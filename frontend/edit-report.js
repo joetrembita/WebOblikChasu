@@ -12,7 +12,7 @@ async function loadWorkers() {
         const workers = await res.json();
         select.innerHTML = workers.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
     } catch (e) {
-        select.innerHTML = '<option disabled>Помилка завантаження</option>';
+        select.innerHTML = '<option disabled>Loading error</option>';
     }
 }
 
@@ -32,7 +32,7 @@ function renderTempTable() {
             <td><input type="checkbox" data-idx="${idx}" class="tips-input" ${entry.tips ? 'checked' : ''}></td>
             <td><input type="checkbox" data-idx="${idx}" class="gas-input" ${entry.gas ? 'checked' : ''}></td>
             <td class="sum-cell">0.00</td>
-            <td><button type="button" class="remove-btn" data-idx="${idx}">Видалити</button></td>
+            <td><button type="button" class="remove-btn" data-idx="${idx}">Delete</button></td>
         `;
         tbody.appendChild(row);
     });
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         const reportId = params.get('id');
         if (reportId) {
-            document.getElementById('edit-report-title').textContent = 'Редагувати звіт';
+            document.getElementById('edit-report-title').textContent = 'Edit brakedown';
             fetch(`${backendUrl}/final-reports/${reportId}`)
                 .then(r => r.json())
                 .then(data => {
@@ -187,10 +187,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok && savedId) {
                 window.location.href = `reports.html?open=${encodeURIComponent(savedId)}`;
             } else {
-                alert('Помилка при збереженні звіту');
+                alert('Brakedown saving error');
             }
         } catch (err) {
-            alert('Помилка при збереженні звіту');
+            alert('Brakedown saving error');
         }
     });
 });

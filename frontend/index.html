@@ -3,21 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Звіт по роботах</title>
+    <title>Brakedown</title>
     <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
     <div class="main-layout">
         <div id="sidebar"></div>
         <div id="final-report-container" class="container">
-        <h3>Основні відомості</h3>
+        <h3>General info</h3>
         <form id="final-report-form">
             <div class="form-group">
-                <label for="job-number-input">Номер роботи:</label>
+                <label for="job-number-input">Job number:</label>
                 <input type="text" id="job-number-input" name="job_number" required>
             </div>
             <div class="form-group">
-                <label for="report-date-input">Дата і час:</label>
+                <label for="report-date-input">Date & time:</label>
                 <input type="datetime-local" id="report-date-input" name="report_date" required>
             </div>
             <div class="form-group horizontal">
@@ -58,36 +58,36 @@
 
         <hr>
 
-        <h3>Додати працівника до звіту</h3>
+        <h3>Add mover</h3>
         <form id="add-to-report-form">
             <div class="form-group">
-                <label for="worker-select">Працівник:</label>
+                <label for="worker-select">Mover:</label>
                 <select id="worker-select" name="worker_id" required></select>
             </div>
-            <button type="submit" id="add-to-report-btn">Додати працівника</button>
+            <button type="submit" id="add-to-report-btn">Add</button>
         </form>
 
         <hr>
 
-        <h3>Дійові особи</h3>
+        <h3>Crew</h3>
         <table id="temp-reports-table">
             <thead>
                 <tr>
-                    <th>Працівник</th>
-                    <th>Години</th>
-                    <th>Ставка</th>
+                    <th>Mover</th>
+                    <th>Hours</th>
+                    <th>Rate</th>
                     <th>Heavy</th>
                     <th>Tips</th>
                     <th>Gas</th>
-                    <th>Сума</th>
-                    <th>Дії</th>
+                    <th>Total</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
             </tbody>
         </table>
         
-        <button type="submit" form="final-report-form" class="submit-button">Сформувати звіт</button>
+        <button type="submit" form="final-report-form" class="submit-button">Save brakedown</button>
         
         <div class="watermark">Created by Joe Trembita</div>
     </div>

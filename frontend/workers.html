@@ -3,47 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Довідник працівників</title>
+    <title>Movers directory</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div class="main-layout">
         <div id="sidebar"></div>
         <div class="container">
-        <h1>Довідник працівників</h1>
+        <h1>Movers directory</h1>
 
         <form id="add-worker-form">
             <div class="form-group">
-                <label for="workerName-input">Ім'я:</label>
+                <label for="workerName-input">Name:</label>
                 <input type="text" id="workerName-input" name="name" required>
             </div>
             <div class="form-group">
-                <label for="workerRate-input">Ставка за замовчуванням:</label>
+                <label for="workerRate-input">Default hourly rate:</label>
                 <input type="number" id="workerRate-input" name="default_hourly_rate" min="0" step="0.01" required>
             </div>
             <div class="form-group">
-                <label for="phone-input">Номер телефону:</label>
-                <input type="text" id="phone-input" name="phone_number" placeholder="не обов'язково">
+                <label for="phone-input">Zelle phone number:</label>
+                <input type="text" id="phone-input" name="phone_number" placeholder="">
             </div>
             <div class="form-group">
-                <label for="email-input">Email:</label>
-                <input type="email" id="email-input" name="email" placeholder="не обов'язково">
+                <label for="email-input">Zelle Email:</label>
+                <input type="email" id="email-input" name="email" placeholder="">
             </div>
-            <button type="submit">Додати</button>
+            <button type="submit">Add</button>
         </form>
 
         <hr>
 
         <div id="workers-list-container">
-            <h2>Існуючі працівники</h2>
+            <h2>Movers</h2>
             <table id="workers-table">
                 <thead>
                     <tr>
-                        <th>Ім'я</th>
-                        <th>Ставка (грн/год)</th>
-                        <th>Телефон</th>
+                        <th>Name</th>
+                        <th>Rate ()</th>
+                        <th>Phone</th>
                         <th>Email</th>
-                        <th>Дії</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>

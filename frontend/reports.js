@@ -1,14 +1,14 @@
 const backendUrl = 'http://localhost:3000';
 
 function formatDate(dateString) {
-    console.log('Вхідна dateString:', dateString);
+    console.log('Inscomig dateString:', dateString);
     let date = new Date(dateString);
     if (dateString.endsWith('Z')) {
         const offsetMs = date.getTimezoneOffset() * 60 * 1000;
         date = new Date(date.getTime() - offsetMs);
     }
     if (isNaN(date)) {
-        return 'Невалідна дата';
+        return 'Invalid data';
     }
     const day = String(date.getDate()).padStart(2, '0');
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -16,7 +16,7 @@ function formatDate(dateString) {
     const hours = String(date.getHours()).padStart(2, '0');
     const minutes = String(date.getMinutes()).padStart(2, '0');
     const formattedDate = `${day}.${month}.${year} ${hours}:${minutes}`;
-    console.log('Відформатована дата:', formattedDate);
+    console.log('Formated date:', formattedDate);
     return formattedDate;
 }
 
@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('report-details-view').style.display = 'none';
         });
     } else {
-        console.error("Елемент 'back-to-reports-link' не знайдено.");
+        console.error("Element 'back-to-reports-link' not found.");
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -54,19 +54,19 @@ async function loadReports() {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const finalReports = await response.json();
-        console.log('Отримані звіти:', finalReports);
+        console.log('Brakedowns:', finalReports);
 
         const table = document.querySelector('#reports-table-container table');
         const reportsTableBody = table ? table.querySelector('tbody') : null;
 
         if (!reportsTableBody) {
-            console.error("Елемент 'reports-table-container tbody' не знайдено.");
+            console.error("Element 'reports-table-container tbody' not found.");
             return;
         }
 
         reportsTableBody.innerHTML = '';
         if (finalReports.length === 0) {
-            reportsTableBody.innerHTML = '<tr><td colspan="6">Поки що немає збережених звітів.</td></tr>';
+            reportsTableBody.innerHTML = '<tr><td colspan="6">Saved brakedowns not found.</td></tr>';
             return;
         }
 
@@ -80,8 +80,8 @@ async function loadReports() {
                 <td>${report.cash_sum != null ? report.cash_sum.toFixed(2) : '0.00'}</td>
                 <td>${formatDate(report.report_date)}</td>
                 <td class="action-buttons">
-                    <button class="view-details-btn" data-id="${report.id}">Переглянути</button>
-                    <button class="delete-btn" data-id="${report.id}">Видалити</button>
+                    <button class="view-details-btn" data-id="${report.id}">View/Edit</button>
+                    <button class="delete-btn" data-id="${report.id}">Delete</button>
                 </td>
             `;
             reportsTableBody.appendChild(row);
@@ -94,7 +94,7 @@ async function loadReports() {
             btn.addEventListener('click', deleteReport);
         });
     } catch (error) {
-        console.error('Помилка при завантаженні звітів:', error);
+        console.error('Brakedown loading error:', error);
     }
 }
 
@@ -105,7 +105,7 @@ async function showReportDetails(reportId) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const reportData = await response.json();
-        console.log('Дані звіту:', reportData);
+        console.log('Brakedown data:', reportData);
         
         const report = reportData.report;
         const entries = reportData.entries.filter(entry => entry.worker_name);
@@ -113,7 +113,7 @@ async function showReportDetails(reportId) {
         document.getElementById('main-reports-view').style.display = 'none';
         document.getElementById('report-details-view').style.display = 'block';
 
-        document.getElementById('report-details-title').textContent = `Звіт ${report.job_number} від ${formatDate(report.report_date)}`;
+        document.getElementById('report-details-title').textContent = `Brakedown No. ${report.job_number} dated ${formatDate(report.report_date)}`;
 
         const heavyWorkersCount = entries.filter(e => e.heavy).length;
         const companyHeavy = heavyWorkersCount > 0 ? report.heavy_sum / (heavyWorkersCount + 1) : 0;
@@ -127,12 +127,12 @@ async function showReportDetails(reportId) {
         const paymentBreakdown = `Cash: ${report.cash_sum.toFixed(2)}, Zelle: ${report.zelle_sum.toFixed(2)}, CC: ${report.cc_sum.toFixed(2)}, Venmo: ${report.venmo_sum.toFixed(2)}`;
 
         document.getElementById('report-summary-info').innerHTML = `
-            <p><strong>Номер роботи:</strong> ${report.job_number}</p>
-            <p><strong>Оплата праці:</strong> ${report.total_labor_cost.toFixed(2)}</p>
-            <p><strong>Оплати:</strong> ${totalPayment} (${paymentBreakdown})</p>
-            <p><strong>Сума Heavy:</strong> ${report.heavy_sum.toFixed(2)}</p>
-            <p><strong>Сума Tips:</strong> ${report.tips_sum.toFixed(2)}</p>
-            <p><strong>Сума Gas:</strong> ${report.gas_sum.toFixed(2)}</p>
+            <p><strong>Job number:</strong> ${report.job_number}</p>
+            <p><strong>Total labor cost:</strong> ${report.total_labor_cost.toFixed(2)}</p>
+            <p><strong>Total payments:</strong> ${totalPayment} (${paymentBreakdown})</p>
+            <p><strong>Heavy:</strong> ${report.heavy_sum.toFixed(2)}</p>
+            <p><strong>Tips:</strong> ${report.tips_sum.toFixed(2)}</p>
+            <p><strong>Gas:</strong> ${report.gas_sum.toFixed(2)}</p>
             <p><strong>Дохід компанії (Heavy):</strong> ${companyHeavy.toFixed(2)}</p>
         `;
 
@@ -142,7 +142,7 @@ async function showReportDetails(reportId) {
         entries.forEach(entry => {
             const row = document.createElement('tr');
             const workerName = entry.worker_name;
-            const workerPhone = entry.phone_number || 'Не вказано';
+            const workerPhone = entry.phone_number || 'Not specified';
             const basePay = entry.hours_worked * entry.actual_hourly_rate;
             
             const heavyValue = entry.heavy ? perHeavy : 0;
@@ -191,17 +191,17 @@ async function showReportDetails(reportId) {
                         const errorData = await logResponse.json();
                         throw new Error(`HTTP error! Status: ${logResponse.status}, Message: ${errorData.error || 'Unknown error'}`);
                     }
-                    console.log('Лог успішно створено для APPROVE_REPORT');
+                    console.log('Log saved for APPROVE_REPORT');
                 } catch (error) {
-                    console.error('Помилка при логуванні дії Approved:', error);
-                    alert('Помилка при логуванні схвалення звіту. Схвалення все одно виконається.');
+                    console.error('Approving log error:', error);
+                    alert('Log saving error. Brakedown sucsessfully approved');
                 }
 
                 const existingEntries = JSON.parse(localStorage.getItem('approvedSalaryEntries') || '[]');
                 const existingJobNumbers = new Set(existingEntries.map(e => e.job_number));
 
                 if (existingJobNumbers.has(report.job_number)) {
-                    alert(`Звіт з номером роботи ${report.job_number} вже був апрувлений.`);
+                    alert(`Brakedown for job ${report.job_number} was already approved.`);
                     return;
                 }
 
@@ -220,13 +220,13 @@ async function showReportDetails(reportId) {
             };
         }
     } catch (error) {
-        console.error('Помилка при завантаженні деталей звіту:', error);
+        console.error('Loading brakedown datails error:', error);
     }
 }
 
 async function deleteReport(event) {
     const reportId = event.target.dataset.id;
-    const confirmDelete = confirm('Ви впевнені, що хочете видалити цей звіт?');
+    const confirmDelete = confirm('Are you shure you want to delete brakedown?');
 
     if (confirmDelete) {
         try {
@@ -240,11 +240,11 @@ async function deleteReport(event) {
                 loadReports();
             } else {
                 const errorData = await response.json();
-                alert(`Помилка при видаленні звіту: ${errorData.error || 'Невідома помилка'}`);
+                alert(`Brakedown deleting error: ${errorData.error || 'Unknown error'}`);
             }
         } catch (error) {
-            console.error('Помилка при видаленні звіту:', error);
-            alert('Помилка при видаленні звіту.');
+            console.error('Brakedown deleting error:', error);
+            alert('Brakedown deleting error.');
         }
     }
 }

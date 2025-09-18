@@ -31,7 +31,7 @@ async function loadWorkers() {
             document.getElementById('rate-input').value = workers[0].default_hourly_rate;
         } else {
             const option = document.createElement('option');
-            option.textContent = "Немає працівників";
+            option.textContent = "No movers";
             workerSelect.appendChild(option);
         }
 
@@ -42,7 +42,7 @@ async function loadWorkers() {
             }
         });
     } catch (error) {
-        console.error('Помилка при завантаженні працівників:', error);
+        console.error('Error occured during movers loading:', error);
     }
 }
 
@@ -52,7 +52,7 @@ function renderTempReports() {
 
     if (tempReports.length === 0) {
         const tr = document.createElement('tr');
-        tr.innerHTML = '<td colspan="8">Поки що немає доданих робітників.</td>';
+        tr.innerHTML = '<td colspan="8">There is no added movers</td>';
         tempTableBody.appendChild(tr);
         return;
     }
@@ -69,7 +69,7 @@ function renderTempReports() {
 
 
     tempReports.forEach((report, index) => {
-    const workerName = document.querySelector(`#worker-select option[value=\"${report.worker_id}\"]`)?.textContent || 'Невідомий працівник';
+    const workerName = document.querySelector(`#worker-select option[value=\"${report.worker_id}\"]`)?.textContent || 'Unknown mover';
     let additional_cost = 0;
     if (report.heavy) additional_cost += heavyPerWorker;
     if (report.tips) additional_cost += tipsPerWorker;
@@ -85,7 +85,7 @@ function renderTempReports() {
         <td><input type="checkbox" class="edit-tips" data-index="${index}" ${report.tips ? 'checked' : ''}></td>
         <td><input type="checkbox" class="edit-gas" data-index="${index}" ${report.gas ? 'checked' : ''}></td>
         <td class="sum-cell">${totalPay.toFixed(2)}</td>
-        <td><button class="remove-temp-report-btn" data-index="${index}">Видалити</button></td>
+        <td><button class="remove-temp-report-btn" data-index="${index}">Delete</button></td>
     `;
     tempTableBody.appendChild(tr);
 });
@@ -144,7 +144,7 @@ document.getElementById('add-to-report-form').addEventListener('submit', (event)
     const form = document.getElementById('add-to-report-form');
     const workerId = form.worker_id.value;
     if (!workerId) {
-        alert('Оберіть працівника.');
+        alert('Choose mover.');
         return;
     }
     // Додаємо працівника з дефолтними значеннями
@@ -165,7 +165,7 @@ document.getElementById('final-report-form').addEventListener('submit', async (e
     event.preventDefault();
 
     if (tempReports.length === 0) {
-        alert('Будь ласка, додайте хоча б одного працівника до звіту.');
+        alert('Please, add at least one mover to brakedown.');
         return;
     }
 
@@ -173,12 +173,12 @@ document.getElementById('final-report-form').addEventListener('submit', async (e
     const reportDate = document.getElementById('report-date-input').value;
 
     if (!reportDate) {
-        alert('Будь ласка, виберіть дату і час звіту.');
+        alert('Please, set date of work.');
         return;
     }
     const parsedDate = new Date(reportDate);
     if (isNaN(parsedDate)) {
-        alert('Невалідний формат дати. Будь ласка, виберіть коректну дату.');
+        alert('Invalid date format. Please set correct date.');
         return;
     }
 
@@ -189,12 +189,12 @@ document.getElementById('final-report-form').addEventListener('submit', async (e
         }
         const reports = await response.json();
         if (reports.some(report => report.job_number === jobNumber)) {
-            alert(`Звіт з номером роботи '${jobNumber}' вже існує.`);
+            alert(`Brakedown for job #'${jobNumber}' already exist.`);
             return;
         }
     } catch (error) {
-        console.error('Помилка при перевірці номера роботи:', error);
-        alert('Помилка при перевірці номера роботи.');
+        console.error('Job number check error:', error);
+        alert('Job number check error.');
         return;
     }
 
@@ -259,16 +259,16 @@ document.getElementById('final-report-form').addEventListener('submit', async (e
         });
 
         if (response.ok) {
-            alert('Звіт успішно сформовано!');
+            alert('Brakedown sucsessfully saved!');
             tempReports = [];
             renderTempReports();
             window.location.href = 'reports.html';
         } else {
             const errorData = await response.json();
-            alert(`Помилка при формуванні звіту: ${errorData.error || 'Невідома помилка'}`);
+            alert(`Brakedown saving error: ${errorData.error || 'unknown error'}`);
         }
     } catch (error) {
-        console.error('Помилка при відправці звіту:', error);
-        alert('Помилка при відправці звіту.');
+        console.error('Brakedown sending error:', error);
+        alert('Brakedown sending error.');
     }
 });

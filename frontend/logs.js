@@ -24,12 +24,12 @@ async function loadLogs() {
         logs.forEach(log => {
             const row = document.createElement('tr');
             const actionText = {
-                'ADD_REPORT': 'Додавання звіту',
-                'DELETE_REPORT': 'Видалення звіту',
-                'ADD_WORKER': 'Додавання працівника',
-                'UPDATE_WORKER': 'Оновлення працівника',
-                'DELETE_WORKER': 'Видалення працівника',
-                'CLEAR_LOGS': 'Очищення логу'
+                'ADD_REPORT': 'Brakedown added',
+                'DELETE_REPORT': 'Brakedown deleted',
+                'ADD_WORKER': 'Mover added',
+                'UPDATE_WORKER': 'Mover updated',
+                'DELETE_WORKER': 'Mover deleted',
+                'CLEAR_LOGS': 'Logs cleared'
             }[log.action] || log.action;
 
             row.innerHTML = `
@@ -40,14 +40,14 @@ async function loadLogs() {
             tableBody.appendChild(row);
         });
     } catch (error) {
-        console.error('Помилка при завантаженні логу:', error);
+        console.error('Logs loading error:', error);
         const tableBody = document.getElementById('logs-table-body');
-        tableBody.innerHTML = '<tr><td colspan="3">Помилка завантаження логу.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="3">Logs loading error.</td></tr>';
     }
 }
 
 async function clearLogs() {
-    const confirmClear = confirm('Ви впевнені, що хочете очистити весь лог?');
+    const confirmClear = confirm('Are you shure you want to clear log? It can not be undone.');
     if (!confirmClear) return;
 
     try {
@@ -57,10 +57,10 @@ async function clearLogs() {
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
-        alert('Лог успішно очищено!');
+        alert('Logs cleared!');
         loadLogs(); // Refresh the logs table
     } catch (error) {
-        console.error('Помилка при очищенні логу:', error);
-        alert('Помилка при очищенні логу.');
+        console.error('Logs clering error:', error);
+        alert('Logs clering error.');
     }
 }

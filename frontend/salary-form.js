@@ -37,10 +37,10 @@ function getUniques(entries, column) {
 
 function getDisplayValue(val, column) {
     if (column.key === 'paid') {
-        return val === 'true' ? 'Оплачено' : 'Не оплачено';
+        return val === 'true' ? 'Paid' : 'Not paid';
     }
     if (column.type === 'boolean') {
-        return val === 'true' ? 'Так' : 'Ні';
+        return val === 'true' ? 'Yes' : 'No';
     }
     return val;
 }
@@ -98,7 +98,7 @@ function showFilterMenu(th) {
     currentFilterMenu.style.minWidth = `${rect.width}px`;
 
     let html = `<h4>Фільтр за ${th.textContent.trim()}</h4>`;
-    html += `<label style="display: block;"><input type="checkbox" id="selectAll_${colKey.replace(/\W/g, '')}"> Вибрати всі</label>`;
+    html += `<label style="display: block;"><input type="checkbox" id="selectAll_${colKey.replace(/\W/g, '')}"> Choose all</label>`;
     html += '<div class="options" style="max-height: 200px; overflow: auto;">';
     uniques.forEach(u => {
         const checked = selected.has(u) ? 'checked' : '';
@@ -158,7 +158,7 @@ function renderSalaryTable(entries) {
             <td>${entry.job_number}</td>
             <td>${entry.worker_name}</td>
             <td>${sum}</td>
-            <td>${entry.paid ? 'Оплачено' : 'Не оплачено'}</td>
+            <td>${entry.paid ? 'Paid' : 'Not paid'}</td>
         `;
         tbody.appendChild(tr);
     });
@@ -178,7 +178,7 @@ function renderSalaryTable(entries) {
             e.stopPropagation();
             const id = btn.dataset.id;
             const job = btn.dataset.job;
-            if (confirm('Видалити цей запис?')) {
+            if (confirm('Delete this record?')) {
                 await deleteSalaryEntry(id);
             }
         });
@@ -199,7 +199,7 @@ async function deleteSalaryEntry(id) {
         saveEntriesToStorage(); // Зберігаємо зміни
         renderSalaryTable(getFilteredEntries());
     } catch (err) {
-        alert('Помилка при видаленні запису');
+        alert('Record deleting error');
     }
 }
 
@@ -229,10 +229,10 @@ document.addEventListener('DOMContentLoaded', () => {
         massDeleteBtn.addEventListener('click', async () => {
             const checked = Array.from(document.querySelectorAll('.row-check:checked'));
             if (checked.length === 0) {
-                alert('Оберіть хоча б один запис для видалення.');
+                alert('Choose at least one record.');
                 return;
             }
-            if (!confirm('Видалити вибрані записи?')) return;
+            if (!confirm('Are you shure you want to delete choosen records?')) return;
             for (const cb of checked) {
                 await deleteSalaryEntry(cb.dataset.id);
             }
@@ -243,10 +243,10 @@ document.addEventListener('DOMContentLoaded', () => {
         massPayBtn.addEventListener('click', async () => {
             const checked = Array.from(document.querySelectorAll('.row-check:checked'));
             if (checked.length === 0) {
-                alert('Оберіть хоча б один запис для оплати.');
+                alert('Choose at least one record.');
                 return;
             }
-            if (!confirm('Позначити вибрані записи як "Оплачені"?')) return;
+            if (!confirm('Are you shure you want to mark choosen records as paid?')) return;
             for (const cb of checked) {
                 await markSalaryEntryPaid(cb.dataset.id);
             }
@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
     headers.forEach((th, i) => {
         if (i === 0) return; // skip checkbox column
         th.style.cursor = 'pointer';
-        th.title = 'Натисніть для фільтрації';
+        th.title = 'Click for filter';
         th.addEventListener('click', (e) => {
             e.stopPropagation();
             showFilterMenu(th);
@@ -289,6 +289,6 @@ async function markSalaryEntryPaid(id) {
         if (entry) entry.paid = true;
         saveEntriesToStorage(); // Зберігаємо зміни
     } catch (err) {
-        alert('Помилка при оплаті запису');
+        alert('Marking as paid error');
     }
 }

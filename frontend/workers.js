@@ -13,7 +13,7 @@ async function loadWorkers() {
         workersTableBody.innerHTML = '';
 
         if (workers.length === 0) {
-            workersTableBody.innerHTML = '<tr><td colspan="5">Немає збережених працівників.</td></tr>';
+            workersTableBody.innerHTML = '<tr><td colspan="5">Saved movers not found.</td></tr>';
             return;
         }
 
@@ -29,18 +29,18 @@ async function loadWorkers() {
                     <input type="number" class="edit-rate-input hidden" value="${worker.default_hourly_rate}" readonly>
                 </td>
                 <td>
-                    <span class="worker-display phone">${worker.phone_number || 'Не вказано'}</span>
+                    <span class="worker-display phone">${worker.phone_number || 'Not specified'}</span>
                     <input type="text" class="edit-phone-input hidden" value="${worker.phone_number || ''}" readonly>
                 </td>
                 <td>
-                    <span class="worker-display email">${worker.email || 'Не вказано'}</span>
+                    <span class="worker-display email">${worker.email || 'Not specified'}</span>
                     <input type="email" class="edit-email-input hidden" value="${worker.email || ''}" readonly>
                 </td>
                 <td class="action-buttons">
-                    <button class="edit-btn" data-id="${worker.id}">Редагувати</button>
-                    <button class="save-btn hidden" data-id="${worker.id}">Зберегти</button>
-                    <button class="cancel-btn hidden" data-id="${worker.id}">Скасувати</button>
-                    <button class="delete-btn" data-id="${worker.id}">Видалити</button>
+                    <button class="edit-btn" data-id="${worker.id}">Edit</button>
+                    <button class="save-btn hidden" data-id="${worker.id}">Save</button>
+                    <button class="cancel-btn hidden" data-id="${worker.id}">Cancel</button>
+                    <button class="delete-btn" data-id="${worker.id}">Delete</button>
                 </td>
             `;
             workersTableBody.appendChild(tr);
@@ -51,7 +51,7 @@ async function loadWorkers() {
         document.querySelectorAll('.cancel-btn').forEach(btn => btn.addEventListener('click', toggleEditMode));
         document.querySelectorAll('.delete-btn').forEach(button => button.addEventListener('click', deleteWorker));
     } catch (error) {
-        console.error('Помилка при завантаженні працівників:', error);
+        console.error('Movers loading error:', error);
     }
 }
 
@@ -79,17 +79,17 @@ document.getElementById('add-worker-form').addEventListener('submit', async (eve
             form.reset();
             loadWorkers();
         } else {
-            alert('Помилка при додаванні працівника.');
+            alert('Mover adding error.');
         }
     } catch (error) {
-        console.error('Помилка при додаванні працівника:', error);
+        console.error('Mover adding error:', error);
     }
 });
 
 async function deleteWorker(event) {
     const workerId = event.target.dataset.id;
 
-    if (!confirm('Ви впевнені, що хочете видалити цього працівника?')) {
+    if (!confirm('Are you shure you want to delete this mover?')) {
         return;
     }
 
@@ -101,10 +101,10 @@ async function deleteWorker(event) {
         if (response.ok) {
             loadWorkers();
         } else {
-            alert('Помилка при видаленні працівника.');
+            alert('Mover deleting error.');
         }
     } catch (error) {
-        console.error('Помилка при видаленні:', error);
+        console.error('Mover deleting error:', error);
     }
 }
 
@@ -141,9 +141,9 @@ async function updateWorker(event) {
         if (response.ok) {
             loadWorkers();
         } else {
-            alert('Помилка при редагуванні працівника.');
+            alert('Mover editing error.');
         }
     } catch (error) {
-        console.error('Помилка при редагуванні працівника:', error);
+        console.error('Mover editing error:', error);
     }
 }
