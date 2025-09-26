@@ -100,10 +100,9 @@ body {
     padding: 0;
 }
 .main-layout {
-/* end of @media (max-width: 600px) */
-    display: flex;
-    flex-direction: row;
-    align-items: flex-start;
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
     max-width: 1300px;
     margin: 0 auto;
     min-height: 100vh;
@@ -111,6 +110,7 @@ body {
 }
 
 .vertical-nav {
+    flex: 0 0 210px !important;
     display: flex;
     flex-direction: column;
     align-items: stretch;
@@ -118,10 +118,8 @@ body {
     background: #fff;
     box-shadow: 0 2px 16px rgba(0,0,0,0.07);
     border-radius: 18px;
-    padding: 32px 0 32px 0;
-    min-width: 210px;
-    margin-right: 40px;
-    margin-top: 40px;
+    padding: 32px 0;
+    margin-right: 40px !important;
     height: fit-content;
     border: 1px solid #f0f1f3;
 }
@@ -583,6 +581,7 @@ h1, h3, h4 {
     font-size: 1rem;
     background: #f9f9f9;
     transition: border 0.2s;
+}
 
 input[type="number"]:focus, input[type="text"]:focus, select:focus {
     border: 1.5px solid #007bff;
@@ -669,4 +668,59 @@ table {
 
 .submit-button:hover {
     background-color: #218838;
+}
+
+/* Styling for login-container */
+.login-container {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 100vh;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Додано для форми логіну */
+.login-container.card {
+    flex: 1; /* Бере залишковий простір */
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    padding: 32px;
+    margin-bottom: 32px;
+    border: 1px solid #f0f1f3;
+    max-width: 500px;
+    margin: 40px auto 0;
+}
+
+#login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#login-form .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+#registration-button.submit-button {
+    background: linear-gradient(90deg, #2563eb 60%, #1e40af 100%);
+}
+
+#registration-button.submit-button:hover {
+    background: linear-gradient(90deg, #1e40af 60%, #2563eb 100%);
+}
+
+/* Адаптивність для екранів до 900px */
+@media (max-width: 900px) {
+    .login-container.card {
+        margin: 0 20px 20px;
+        padding: 24px;
+    }
 }
