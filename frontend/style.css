@@ -1,0 +1,726 @@
+/* --- Меню фільтрації для salary-form --- */
+.filter-menu {
+    position: absolute;
+    background: #fff;
+    border: 1.5px solid #2563eb;
+    border-radius: 10px;
+    padding: 12px 16px;
+    z-index: 10000;
+    max-height: 320px;
+    overflow-y: auto;
+    box-shadow: 0 4px 24px rgba(37,99,235,0.13);
+    font-size: 1em;
+    min-width: 180px;
+    min-height: 40px;
+    top: 36px;
+    left: 0;
+}
+.filter-menu label {
+    display: block;
+    margin-bottom: 6px;
+    cursor: pointer;
+    font-size: 1em;
+}
+.filter-menu button {
+    margin-top: 10px;
+    background: #eaf1fb;
+    color: #2563eb;
+    border: 1px solid #2563eb;
+    border-radius: 6px;
+    padding: 6px 16px;
+    font-size: 1em;
+    cursor: pointer;
+}
+.filter-menu button:hover {
+    background: #2563eb;
+    color: #fff;
+}
+/* Рядок для Heavy/Tips/Gas */
+#edit-report-form .extra-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 16px;
+}
+#edit-report-form .extra-row label {
+    margin-bottom: 0;
+    font-weight: 500;
+    text-align: right;
+}
+#edit-report-form .extra-row input {
+    width: 90px;
+    min-width: 60px;
+    margin-right: 0;
+}
+/* Рядок для Cash/Zelle/CC/Venmo */
+#edit-report-form .payment-row {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    margin-bottom: 16px;
+}
+#edit-report-form .payment-row label {
+    margin-bottom: 0;
+    font-weight: 500;
+    text-align: right;
+}
+#edit-report-form .payment-row input {
+    width: 90px;
+    min-width: 60px;
+    margin-right: 0;
+}
+/* Вирівнювання полів у формі редагування звіту */
+#edit-report-form .form-group.horizontal {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 16px;
+}
+#edit-report-form .form-group.horizontal label {
+    min-width: 140px;
+    margin-bottom: 0;
+    font-weight: 500;
+    text-align: right;
+}
+#edit-report-form .form-group.horizontal input,
+#edit-report-form .form-group.horizontal select {
+    flex: 1 1 0;
+    margin-bottom: 0;
+    min-width: 0;
+}
+/* Приховати елементи з класом hidden */
+.hidden {
+    display: none !important;
+}
+body {
+    background: #f6f8fa;
+    font-family: 'Segoe UI', 'Roboto', Arial, sans-serif;
+    color: #222;
+    margin: 0;
+    padding: 0;
+}
+.main-layout {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: flex-start !important;
+    max-width: 1300px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background: #f6f8fa;
+}
+
+.vertical-nav {
+    flex: 0 0 210px !important;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    background: #fff;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    border-radius: 18px;
+    padding: 32px 0;
+    margin-right: 40px !important;
+    height: fit-content;
+    border: 1px solid #f0f1f3;
+}
+
+.vertical-nav .main-button {
+    border-radius: 8px;
+    border: none;
+    background: none;
+    color: #222;
+    font-size: 1.08rem;
+    font-weight: 500;
+    box-shadow: none;
+    padding: 18px 36px 18px 48px;
+    margin: 0 0 8px 0;
+    min-width: 210px;
+    width: 100%;
+    text-align: left;
+    transition: background 0.2s, color 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.vertical-nav .main-button:hover, .vertical-nav .main-button.active {
+    background: #eaf1fb;
+    color: #2563eb;
+    border: 2px solid #2563eb;
+    box-sizing: border-box;
+    width: calc(100% - 4px);
+    margin-left: 2px;
+    margin-right: 2px;
+    z-index: 1;
+}
+
+.vertical-nav {
+    overflow: hidden;
+}
+
+.container {
+    margin-top: 40px;
+    max-width: 900px;
+    width: 100%;
+}
+
+/* --- Card стиль для блоків --- */
+.card {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    padding: 32px 32px 24px 32px;
+    margin-bottom: 32px;
+    border: 1px solid #f0f1f3;
+}
+
+/* --- Сучасні поля вводу --- */
+input[type="number"], input[type="text"], input[type="email"], select, input[type="datetime-local"] {
+    width: 100%;
+    padding: 12px 16px;
+    border: 1.5px solid #e0e3e7;
+    border-radius: 8px;
+    background: #f8fafc;
+    font-size: 1rem;
+    transition: border 0.2s, box-shadow 0.2s;
+    margin-bottom: 0;
+    box-sizing: border-box;
+}
+
+
+#edit-report-form input[type="number"],
+#edit-report-form input[type="text"],
+#edit-report-form select,
+#edit-report-form input[type="datetime-local"] {
+    height: 30px !important;
+}
+
+#edit-report-form input[type="datetime-local"] {
+    width: 220px !important;
+    min-width: 180px;
+    max-width: 300px;
+}
+
+input[type="number"]:focus, input[type="text"]:focus, input[type="email"]:focus, select:focus, input[type="datetime-local"]:focus {
+    border: 1.5px solid #2563eb;
+    outline: none;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.07);
+}
+
+.form-group label {
+    font-weight: 500;
+    color: #444;
+    margin-bottom: 6px;
+}
+
+.form-group.horizontal {
+    gap: 24px;
+}
+
+.input-group label {
+    color: #666;
+    font-size: 0.98em;
+    margin-bottom: 4px;
+}
+
+/* --- Кнопки --- */
+button, .submit-button, #add-to-report-btn {
+    display: inline-block;
+    min-width: 160px;
+    padding: 14px 0;
+    background: linear-gradient(90deg, #2563eb 60%, #1e40af 100%);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.08rem;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(37,99,235,0.08);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    margin-top: 12px;
+}
+button:hover, .submit-button:hover, #add-to-report-btn:hover {
+    background: linear-gradient(90deg, #1e40af 60%, #2563eb 100%);
+    box-shadow: 0 4px 16px rgba(37,99,235,0.13);
+    transform: translateY(-2px) scale(1.03);
+}
+.submit-button {
+    background: linear-gradient(90deg, #22c55e 60%, #16a34a 100%);
+    margin-right: 16px;
+}
+.submit-button:hover {
+    background: linear-gradient(90deg, #16a34a 60%, #22c55e 100%);
+}
+.clear-btn {
+    background: #fff;
+    color: #2563eb;
+    border: 1.5px solid #2563eb;
+    margin-left: 0;
+    margin-right: 0;
+}
+.clear-btn:hover {
+    background: #eaf1fb;
+}
+
+/* --- Таблиця --- */
+table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: #fff;
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    overflow: hidden;
+    margin-bottom: 24px;
+    font-size: 1.01rem;
+}
+th, td {
+    border: none;
+    padding: 14px 12px;
+    text-align: left;
+}
+
+tr:hover td {
+    background: #eaf1fb;
+}
+
+/* --- Дрібні деталі --- */
+.watermark {
+    position: fixed;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    opacity: 0.2;
+    transition: opacity 0.3s ease;
+}
+
+.watermark:hover {
+    opacity: 1;
+}
+
+@media (max-width: 900px) {
+    .main-layout {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .vertical-nav {
+        flex-direction: row;
+        min-width: unset;
+        margin: 0 0 24px 0;
+        padding: 12px 0;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        width: 100%;
+        justify-content: center;
+        gap: 0;
+    }
+    .vertical-nav .main-button {
+        border-radius: 0;
+        padding: 14px 0;
+        text-align: center;
+        font-size: 1rem;
+    }
+    .container {
+        margin-top: 0;
+    }
+    .card {
+        padding: 18px 6px 12px 6px;
+    }
+}
+
+@media (max-width: 900px) {
+    .main-layout {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .vertical-nav {
+        flex-direction: row;
+        min-width: unset;
+        margin: 0 0 24px 0;
+        padding: 12px 0;
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        width: 100%;
+        justify-content: center;
+        gap: 0;
+    }
+    .vertical-nav .main-button {
+        border-radius: 0;
+        padding: 14px 0;
+        text-align: center;
+        font-size: 1rem;
+    }
+    .container {
+        margin-top: 0;
+    }
+
+
+th, td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+th {
+    background-color: #f2f2f2;
+}
+
+tr:nth-child(even) {
+    background-color: #f9f9f9;
+}
+
+tr:hover {
+    background-color: #e9ecef;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 5px;
+}
+
+.action-buttons button {
+    padding: 5px 8px;
+    font-size: 12px;
+}
+
+.navigation-buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    border-radius: 0 0 12px 12px;
+    overflow: hidden;
+    margin-bottom: 32px;
+    padding: 0;
+}
+
+.main-button, .back-link {
+    display: block;
+    padding: 18px 36px;
+    background: none;
+    color: #222;
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border: none;
+    border-right: 1px solid #eee;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+    outline: none;
+    width: auto;
+}
+
+.main-button:hover, .back-link:hover {
+    background: #007bff;
+    color: #fff;
+}
+
+#reports-table-container {
+    display: block;
+}
+
+#reports-table-container table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+#reports-table-container th, #reports-table-container td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: left;
+}
+
+#workers-list li, #paytypes-list li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#workers-list .actions, #paytypes-list .actions {
+    display: flex;
+    gap: 5px;
+}
+
+#workers-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+}
+
+#workers-table th, #workers-table td {
+    border: 1px solid #ddd;
+    padding: 10px;
+    text-align: left;
+}
+
+#workers-table th {
+    background-color: #f2f2f2;
+}
+
+#workers-table td .actions {
+    white-space: nowrap;
+}
+
+#workers-table .edit-name-input, #workers-table .edit-rate-input {
+    width: auto;
+    max-width: 100px;
+}
+
+.hidden {
+    display: none;
+}
+
+.edit-input, .edit-name-input, .edit-rate-input {
+    width: 60%;
+    margin-right: 10px;
+}
+
+.watermark {
+    font-size: 12 px;
+    color: #888;
+    text-align: center;
+    margin-top: 20px;
+    opacity: 0.6;
+}
+
+.watermark {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-top: 20px;
+    opacity: 0.2;
+    transition: opacity 0.3s ease;
+}
+
+.watermark:hover {
+    opacity: 1;
+}
+
+.watermark {
+    font-size: 12px;
+    color: #888;
+    text-align: center;
+    margin-top: 20px;
+    opacity: 0.2;
+    transition: opacity 0.3s ease;
+}
+
+.watermark:hover {
+    opacity: 1;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.navigation-buttons {
+    margin-bottom: 20px;
+}
+
+.main-button {
+    display: block;
+    padding: 18px 36px;
+    background: none;
+    color: #222;
+    text-decoration: none;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border: none;
+    border-right: 1px solid #eee;
+    transition: background 0.2s, color 0.2s;
+    cursor: pointer;
+    outline: none;
+    width: auto;
+}
+
+.main-button:hover {
+    background: #007bff;
+    color: #fff;
+}
+
+.back-link {
+    display: inline-block;
+    margin-bottom: 20px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.back-link:hover {
+    text-decoration: underline;
+}
+
+h1, h3, h4 {
+    margin-bottom: 20px;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.form-group input, .form-group select {
+    width: 220px;
+    max-width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #bbb;
+    border-radius: 5px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    background: #f9f9f9;
+    transition: border 0.2s;
+}
+
+input[type="number"]:focus, input[type="text"]:focus, select:focus {
+    border: 1.5px solid #007bff;
+    outline: none;
+    background: #fff;
+}
+form, .form-group, .input-group {
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+@media (max-width: 600px) {
+    .navigation-buttons {
+        flex-direction: column;
+        border-radius: 0 0 8px 8px;
+    }
+    .main-button {
+        border-right: none;
+        border-bottom: 1px solid #eee;
+        width: 100%;
+        padding: 16px 0;
+    }
+    .main-button:last-child {
+        border-bottom: none;
+    }
+    form, .form-group, .input-group {
+        max-width: 98vw;
+    }
+    input[type="number"], input[type="text"], select {
+        width: 100%;
+    }
+}
+.form-group.horizontal {
+    display: flex;
+    gap: 20px;
+}
+
+.input-group {
+    flex: 1;
+}
+
+.checkbox-group {
+    margin-bottom: 15px;
+}
+
+.checkbox-group label {
+    margin-right: 20px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+}
+
+.view-details-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.view-details-btn:hover {
+    background-color: #0056b3;
+}
+
+.delete-btn, #delete-detailed-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.delete-btn:hover, #delete-detailed-btn:hover {
+    background-color: #c82333;
+}
+
+.submit-button {
+    display: block;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-top: 20px;
+}
+
+.submit-button:hover {
+    background-color: #218838;
+}
+
+/* Styling for login-container */
+.login-container {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    min-height: 100vh;
+    padding: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Додано для форми логіну */
+.login-container.card {
+    flex: 1; /* Бере залишковий простір */
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.07);
+    padding: 32px;
+    margin-bottom: 32px;
+    border: 1px solid #f0f1f3;
+    max-width: 500px;
+    margin: 40px auto 0;
+}
+
+#login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+#login-form .form-group {
+    display: flex;
+    flex-direction: column;
+}
+
+#registration-button.submit-button {
+    background: linear-gradient(90deg, #2563eb 60%, #1e40af 100%);
+}
+
+#registration-button.submit-button:hover {
+    background: linear-gradient(90deg, #1e40af 60%, #2563eb 100%);
+}
+
+/* Адаптивність для екранів до 900px */
+@media (max-width: 900px) {
+    .login-container.card {
+        margin: 0 20px 20px;
+        padding: 24px;
+    }
+}

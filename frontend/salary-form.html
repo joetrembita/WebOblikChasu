@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payrolls</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <div class="main-layout">
+        <div id="sidebar"></div>
+        <div class="container card" style="max-width:1200px;margin-top:48px;">
+            <div style="display:flex;align-items:center;gap:18px;margin-bottom:12px;">
+                <h2 style="margin:0;">Payrolls</h2>
+                <button id="reset-filters-btn" type="button" style="margin-left:8px;">Clear filters</button>
+                <button id="mass-delete-btn" type="button" style="background:#dc3545;color:#fff;">Delete</button>
+                <button id="mass-pay-btn" type="button" style="background:#22c55e;color:#fff;">Pay</button>
+            </div>
+            <table id="salary-table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" id="check-all"></th>
+                        <th>Job number</th>
+                        <th>Name</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <script src="salary-form.js"></script>
+    <script>
+    fetch('sidebar.html').then(r => r.text()).then(html => {
+        document.getElementById('sidebar').innerHTML = html;
+    });
+    </script>
+</body>
+</html>

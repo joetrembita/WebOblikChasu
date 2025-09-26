@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add/Change brakedown</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <div class="main-layout">
+        <div id="sidebar"></div>
+        <div class="container">
+            <h1 id="edit-report-title">Add brakedown</h1>
+            <form id="edit-report-form">
+                <div class="form-group horizontal">
+                    <label for="job-number-input" style="min-width:140px;">Job number:</label>
+                    <input type="text" id="job-number-input" name="job_number" required>
+                </div>
+                <div class="form-group horizontal">
+                    <label for="report-date-input" style="min-width:140px;">Date & time:</label>
+                    <input type="datetime-local" id="report-date-input" name="report_date" required>
+                </div>
+                <div class="form-group horizontal payment-row">
+                    <label for="cash-input" style="min-width:80px;">Cash:</label>
+                    <input type="number" id="cash-input" name="cash_sum" min="0" step="1" value="0">
+                    <label for="zelle-input" style="min-width:80px; margin-left:18px;">Zelle:</label>
+                    <input type="number" id="zelle-input" name="zelle_sum" min="0" step="1" value="0">
+                    <label for="cc-input" style="min-width:80px; margin-left:18px;">CC:</label>
+                    <input type="number" id="cc-input" name="cc_sum" min="0" step="1" value="0">
+                    <label for="venmo-input" style="min-width:80px; margin-left:18px;">Venmo:</label>
+                    <input type="number" id="venmo-input" name="venmo_sum" min="0" step="1" value="0">
+                </div>
+                <div class="form-group horizontal extra-row">
+                    <label for="heavy-input-final" style="min-width:80px;">Heavy item:</label>
+                    <input type="number" id="heavy-input-final" name="heavy_sum" min="0" step="0.01" value="0">
+                    <label for="tips-input-final" style="min-width:80px; margin-left:18px;">Tips:</label>
+                    <input type="number" id="tips-input-final" name="tips_sum" min="0" step="0.01" value="0">
+                    <label for="gas-input-final" style="min-width:80px; margin-left:18px;">Gas:</label>
+                    <input type="number" id="gas-input-final" name="gas_sum" min="0" step="0.01" value="0">
+                </div>
+            </form>
+            <hr>
+            <h3>Add mover</h3>
+            <form id="add-to-report-form">
+                <div class="form-group">
+                    <label for="worker-select">Mover:</label>
+                    <select id="worker-select" name="worker_id" required></select>
+                </div>
+                <button type="submit" id="add-to-report-btn">Add mover</button>
+            </form>
+            <hr>
+            <h3>Crew</h3>
+            <table id="temp-reports-table">
+                <thead>
+                    <tr>
+                        <th>Mover</th>
+                        <th>Hours</th>
+                        <th>Rate</th>
+                        <th>Heavy</th>
+                        <th>Tips</th>
+                        <th>Gas</th>
+                        <th>Total</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+            <button type="submit" form="edit-report-form" class="submit-button">Save brakedown</button>
+            <div class="watermark">Created by Joe Trembita</div>
+        </div>
+    </div>
+    <script src="edit-report.js"></script>
+    <script>
+    // Динамічне підключення спільного меню
+    fetch('sidebar.html')
+      .then(r => r.text())
+      .then(html => {
+        document.getElementById('sidebar').innerHTML = html;
+      });
+    </script>
+</body>
+</html>

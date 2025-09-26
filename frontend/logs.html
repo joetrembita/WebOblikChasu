@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Log</title>
+    <link rel="stylesheet" href="style.css?v=2">
+</head>
+<body>
+    <div class="main-layout">
+        <div id="sidebar"></div>
+        <div class="container">
+        <h1>Log</h1>
+        
+        <div id="logs-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th>Time</th>
+                    </tr>
+                </thead>
+                <tbody id="logs-table-body">
+                </tbody>
+            </table>
+        </div>
+        <button id="clear-logs-btn" class="submit-button">Clear logs</button>
+    </div>
+        <script src="logs.js?v=2"></script>
+        <script>
+        // Динамічне підключення спільного меню
+        fetch('sidebar.html')
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('sidebar').innerHTML = html;
+            });
+        </script>
+</body>
+</html>
