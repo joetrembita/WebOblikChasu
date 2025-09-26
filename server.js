@@ -1,5 +1,6 @@
 // server.js — версія під PostgreSQL (Railway)
 // -------------------------------------------
+require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
