@@ -1,5 +1,4 @@
-// server.js — версія під PostgreSQL (Railway)
-// -------------------------------------------
+--
 require('dotenv').config();
 
 const express = require('express');
@@ -20,7 +19,13 @@ const pool = new Pool({
 });
 
 // 3) Базові мідлвари і, за потреби, статика (можеш прибрати, якщо фронт на Hostinger)
-app.use(cors());
+app.use(cors({
+  origin: [
+    'http://localhost:8080',                 
+    'https://brakedown.up.railway.app>' 
+  ],
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+}));
 app.use(express.json());
 app.use(express.static('frontend'));
 

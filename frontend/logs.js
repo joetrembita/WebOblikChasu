@@ -1,4 +1,5 @@
 const backendUrl = 'http://localhost:3000';
+const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
 
 document.addEventListener('DOMContentLoaded', () => {
     loadLogs();
@@ -7,7 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadLogs() {
     try {
-        const response = await fetch(`${backendUrl}/logs`);
+        const response = await fetch(`${API}/logs`);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -51,7 +52,7 @@ async function clearLogs() {
     if (!confirmClear) return;
 
     try {
-        const response = await fetch(`${backendUrl}/logs`, {
+        const response = await fetch(`${API}/logs`, {
             method: 'DELETE'
         });
         if (!response.ok) {

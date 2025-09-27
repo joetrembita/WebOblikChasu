@@ -2,13 +2,14 @@
 // Логіка для створення/редагування звіту: заповнення, розрахунки, збереження
 
 const backendUrl = 'http://localhost:3000';
+const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
 
 // --- Заповнення списку працівників ---
 async function loadWorkers() {
     const select = document.getElementById('worker-select');
     if (!select) return;
     try {
-        const res = await fetch(`${backendUrl}/workers`);
+        const res = await fetch(`${API}/workers`);
         const workers = await res.json();
         select.innerHTML = workers.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
     } catch (e) {
@@ -69,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const reportId = params.get('id');
         if (reportId) {
             document.getElementById('edit-report-title').textContent = 'Edit brakedown';
-            fetch(`${backendUrl}/final-reports/${reportId}`)
+            fetch(`${API}/final-reports/${reportId}`)
                 .then(r => r.json())
                 .then(data => {
                     const report = data.report;
@@ -167,14 +168,14 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             let res, savedId;
             if (reportId) {
-                res = await fetch(`${backendUrl}/final-reports/${reportId}`, {
+                res = await fetch(`${API}/final-reports/${reportId}`, {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(body)
                 });
                 savedId = reportId;
             } else {
-                res = await fetch(`${backendUrl}/final-reports`, {
+                res = await fetch(`${API}/final-reports`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(body)

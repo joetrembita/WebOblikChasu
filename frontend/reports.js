@@ -1,4 +1,5 @@
 const backendUrl = 'http://localhost:3000';
+const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
 
 function formatDate(dateString) {
     console.log('Inscomig dateString:', dateString);
@@ -49,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadReports() {
     try {
-        const response = await fetch(`${backendUrl}/final-reports`);
+        const response = await fetch(`${API}/final-reports`);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -100,7 +101,7 @@ async function loadReports() {
 
 async function showReportDetails(reportId) {
     try {
-        const response = await fetch(`${backendUrl}/final-reports/${reportId}`);
+        const response = await fetch(`${API}/final-reports/${reportId}`);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -177,7 +178,7 @@ async function showReportDetails(reportId) {
         if (approveBtn) {
             approveBtn.onclick = async () => {
                 try {
-                    const logResponse = await fetch(`${backendUrl}/logs`, {
+                    const logResponse = await fetch(`${API}/logs`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json'
@@ -230,7 +231,7 @@ async function deleteReport(event) {
 
     if (confirmDelete) {
         try {
-            const response = await fetch(`${backendUrl}/final-reports/${reportId}`, {
+            const response = await fetch(`${API}/final-reports/${reportId}`, {
                 method: 'DELETE'
             });
 
