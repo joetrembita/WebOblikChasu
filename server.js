@@ -3,6 +3,14 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
+app.use(cors({
+  origin: [
+    'https://brakedown.up.railway.app', 
+    'http://localhost:8080'              
+  ],
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+}));
+
 const path = require('path');
 const { Pool } = require('pg');
 

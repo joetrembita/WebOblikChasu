@@ -1,4 +1,3 @@
-const backendUrl = 'http://localhost:3000';
 const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
 
 function formatDate(dateString) {
