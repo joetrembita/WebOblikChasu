@@ -71,13 +71,14 @@ async function loadReports() {
         }
 
         finalReports.forEach(report => {
-            const totalCost = report.total_cost == null ? 0 : report.total_cost;
+            const totalCost = Number(report.total_cost ?? 0);
+            const cashSum = Number(report.cash_sum ?? 0);
             const row = document.createElement('tr');
             row.innerHTML = `
                 <td>${report.job_number}</td>
                 <td>${report.worker_count}</td>
-                <td>${(totalCost).toFixed(2)}</td>
-                <td>${report.cash_sum != null ? report.cash_sum.toFixed(2) : '0.00'}</td>
+                <td>${totalCost.toFixed(2)}</td>
+                <td>${cashSum.toFixed(2)}</td>
                 <td>${formatDate(report.report_date)}</td>
                 <td class="action-buttons">
                     <button class="view-details-btn" data-id="${report.id}">View/Edit</button>
@@ -108,6 +109,14 @@ async function showReportDetails(reportId) {
         console.log('Brakedown data:', reportData);
         
         const report = reportData.report;
+        const cashSum = Number(report.cash_sum ?? 0);
+        const zelleSum = Number(report.zelle_sum ?? 0);
+        const ccSum = Number(report.cc_sum ?? 0);
+        const venmoSum = Number(report.venmo_sum ?? 0);
+        const heavySum = Number(report.heavy_sum ?? 0);
+        const tipsSum = Number(report.tips_sum ?? 0);
+        const gasSum = Number(report.gas_sum ?? 0);
+        const totalLaborCost = Number(report.total_labor_cost ?? 0);
         const entries = reportData.entries.filter(entry => entry.worker_name);
         
         document.getElementById('main-reports-view').style.display = 'none';
@@ -116,23 +125,23 @@ async function showReportDetails(reportId) {
         document.getElementById('report-details-title').textContent = `Brakedown No. ${report.job_number} dated ${formatDate(report.report_date)}`;
 
         const heavyWorkersCount = entries.filter(e => e.heavy).length;
-        const companyHeavy = heavyWorkersCount > 0 ? report.heavy_sum / (heavyWorkersCount + 1) : 0;
+        const companyHeavy = heavyWorkersCount > 0 ? heavySum / (heavyWorkersCount + 1) : 0;
         const tipsWorkersCount = entries.filter(e => e.tips).length;
-        const perTips = tipsWorkersCount > 0 ? report.tips_sum / tipsWorkersCount : 0;
+        const perTips = tipsWorkersCount > 0 ? tipsSum / tipsWorkersCount : 0;
         const gasWorkersCount = entries.filter(e => e.gas).length;
-        const perGas = gasWorkersCount > 0 ? report.gas_sum / gasWorkersCount : 0;
+        const perGas = gasWorkersCount > 0 ? gasSum / gasWorkersCount : 0;
         const perHeavy = companyHeavy;
 
-        const totalPayment = (report.cash_sum + report.zelle_sum + report.cc_sum + report.venmo_sum).toFixed(2);
-        const paymentBreakdown = `Cash: ${report.cash_sum.toFixed(2)}, Zelle: ${report.zelle_sum.toFixed(2)}, CC: ${report.cc_sum.toFixed(2)}, Venmo: ${report.venmo_sum.toFixed(2)}`;
+        const totalPayment = (cashSum + zelleSum + ccSum + venmoSum).toFixed(2);
+        const paymentBreakdown = `Cash: ${cashSum.toFixed(2)}, Zelle: ${zelleSum.toFixed(2)}, CC: ${ccSum.toFixed(2)}, Venmo: ${venmoSum.toFixed(2)}`;
 
         document.getElementById('report-summary-info').innerHTML = `
             <p><strong>Job number:</strong> ${report.job_number}</p>
-            <p><strong>Total labor cost:</strong> ${report.total_labor_cost.toFixed(2)}</p>
+            <p><strong>Total labor cost:</strong> ${totalLaborCost.toFixed(2)}</p>
             <p><strong>Total payments:</strong> ${totalPayment} (${paymentBreakdown})</p>
-            <p><strong>Heavy:</strong> ${report.heavy_sum.toFixed(2)}</p>
-            <p><strong>Tips:</strong> ${report.tips_sum.toFixed(2)}</p>
-            <p><strong>Gas:</strong> ${report.gas_sum.toFixed(2)}</p>
+            <p><strong>Heavy:</strong> ${heavySum.toFixed(2)}</p>
+            <p><strong>Tips:</strong> ${tipsSum.toFixed(2)}</p>
+            <p><strong>Gas:</strong> ${gasSum.toFixed(2)}</p>
             <p><strong>Дохід компанії (Heavy):</strong> ${companyHeavy.toFixed(2)}</p>
         `;
 
@@ -143,8 +152,10 @@ async function showReportDetails(reportId) {
             const row = document.createElement('tr');
             const workerName = entry.worker_name;
             const workerPhone = entry.phone_number || 'Not specified';
-            const basePay = entry.hours_worked * entry.actual_hourly_rate;
-            
+            const hoursWorked = Number(entry.hours_worked ?? 0);
+            const hourlyRate = Number(entry.actual_hourly_rate ?? 0);
+            const basePay = hoursWorked * hourlyRate;
+
             const heavyValue = entry.heavy ? perHeavy : 0;
             const tipsValue = entry.tips ? perTips : 0;
             const gasValue = entry.gas ? perGas : 0;
@@ -153,8 +164,8 @@ async function showReportDetails(reportId) {
             row.innerHTML = `
                 <td>${workerName}</td>
                 <td>${workerPhone}</td>
-                <td>${entry.hours_worked}</td>
-                <td>${entry.actual_hourly_rate}</td>
+                <td>${hoursWorked}</td>
+                <td>${hourlyRate}</td>
                 <td>${heavyValue.toFixed(2)}</td>
                 <td>${tipsValue.toFixed(2)}</td>
                 <td>${gasValue.toFixed(2)}</td>
@@ -211,7 +222,7 @@ async function showReportDetails(reportId) {
                     .map(entry => ({
                         ...entry,
                         job_number: report.job_number,
-                        sum: (entry.hours_worked * entry.actual_hourly_rate + (entry.heavy ? perHeavy : 0) + (entry.tips ? perTips : 0) + (entry.gas ? perGas : 0)).toFixed(2)
+                        sum: (Number(entry.hours_worked ?? 0) * Number(entry.actual_hourly_rate ?? 0) + (entry.heavy ? perHeavy : 0) + (entry.tips ? perTips : 0) + (entry.gas ? perGas : 0)).toFixed(2)
                     }));
 
                 const updatedEntries = newEntries.concat(existingEntries);
