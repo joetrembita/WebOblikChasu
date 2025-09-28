@@ -3,14 +3,6 @@ require('dotenv').config();
 
 const express = require('express');
 const cors = require('cors');
-app.use(cors({
-  origin: [
-    'https://brakedown.up.railway.app', 
-    'http://localhost:8080'              
-  ],
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-}));
-
 const path = require('path');
 const { Pool } = require('pg');
 
@@ -29,8 +21,8 @@ const pool = new Pool({
 // 3) Базові мідлвари і, за потреби, статика (можеш прибрати, якщо фронт на Hostinger)
 app.use(cors({
   origin: [
-    'http://localhost:8080',                 
-    'https://brakedown.up.railway.app>' 
+    'http://localhost:8080',
+    'https://brakedown.up.railway.app'
   ],
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
 }));
