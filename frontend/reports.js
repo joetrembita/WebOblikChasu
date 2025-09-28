@@ -2,8 +2,12 @@ const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
 
 function formatDate(dateString) {
     console.log('Inscomig dateString:', dateString);
-    let date = new Date(dateString);
-    if (dateString.endsWith('Z')) {
+    if (!dateString) {
+        return 'Invalid data';
+    }
+    const normalizedDateString = String(dateString);
+    let date = new Date(normalizedDateString);
+    if (normalizedDateString.endsWith('Z')) {
         const offsetMs = date.getTimezoneOffset() * 60 * 1000;
         date = new Date(date.getTime() - offsetMs);
     }
