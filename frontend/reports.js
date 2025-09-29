@@ -1,5 +1,9 @@
 const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
 
+const num = v => (v == null || v === '') ? 0 : Number(v);
+const bool = v => v === true || v === 1 || v === '1' || v === 't' || v === 'true';
+
+
 function formatDate(dateString) {
     console.log('Inscomig dateString:', dateString);
     if (!dateString) {
@@ -75,22 +79,25 @@ async function loadReports() {
         }
 
         finalReports.forEach(report => {
-            const totalCost = Number(report.total_cost ?? 0);
-            const cashSum = Number(report.cash_sum ?? 0);
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td>${report.job_number}</td>
-                <td>${report.worker_count}</td>
-                <td>${totalCost.toFixed(2)}</td>
-                <td>${cashSum.toFixed(2)}</td>
-                <td>${formatDate(report.report_date)}</td>
-                <td class="action-buttons">
-                    <button class="view-details-btn" data-id="${report.id}">View/Edit</button>
-                    <button class="delete-btn" data-id="${report.id}">Delete</button>
-                </td>
-            `;
-            reportsTableBody.appendChild(row);
+        const totalCost = num(report.total_cost);
+        const cashSum   = num(report.cash_sum);
+        const workerCnt = num(report.worker_count);
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${report.job_number}</td>
+            <td>${workerCnt}</td>
+            <td>${totalCost.toFixed(2)}</td>
+            <td>${cashSum.toFixed(2)}</td>
+            <td>${formatDate(report.report_date)}</td>
+            <td class="action-buttons">
+            <button class="view-details-btn" data-id="${report.id}">View/Edit</button>
+            <button class="delete-btn" data-id="${report.id}">Delete</button>
+            </td>
+        `;
+        reportsTableBody.appendChild(row);
         });
+
 
         document.querySelectorAll('.view-details-btn').forEach(btn => {
             btn.addEventListener('click', (event) => showReportDetails(event.target.dataset.id));
