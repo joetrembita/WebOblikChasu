@@ -1,7 +1,14 @@
 const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
 
-const num = v => (v == null || v === '') ? 0 : Number(v);
-const bool = v => v === true || v === 1 || v === '1' || v === 't' || v === 'true';
+// === helpers ===
+const num = (v) => {
+  if (v == null) return 0;
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+};
+const toMoney = (v) => num(v).toFixed(2);
+const toInt = (v) => parseInt(v, 10) || 0;
+const bool = (v) => v === true || v === 1 || v === '1' || v === 't' || v === 'true';
 
 
 function formatDate(dateString) {
@@ -79,16 +86,12 @@ async function loadReports() {
         }
 
         finalReports.forEach(report => {
-        const totalCost = num(report.total_cost);
-        const cashSum   = num(report.cash_sum);
-        const workerCnt = num(report.worker_count);
-
         const row = document.createElement('tr');
         row.innerHTML = `
             <td>${report.job_number}</td>
-            <td>${workerCnt}</td>
-            <td>${totalCost.toFixed(2)}</td>
-            <td>${cashSum.toFixed(2)}</td>
+            <td>${toInt(report.worker_count)}</td>
+            <td>${toMoney(report.total_cost)}</td>
+            <td>${toMoney(report.cash_sum)}</td>
             <td>${formatDate(report.report_date)}</td>
             <td class="action-buttons">
             <button class="view-details-btn" data-id="${report.id}">View/Edit</button>
@@ -97,6 +100,7 @@ async function loadReports() {
         `;
         reportsTableBody.appendChild(row);
         });
+
 
 
         document.querySelectorAll('.view-details-btn').forEach(btn => {
@@ -119,71 +123,68 @@ async function showReportDetails(reportId) {
         const reportData = await response.json();
         console.log('Brakedown data:', reportData);
         
-        const report = reportData.report;
-        const cashSum = Number(report.cash_sum ?? 0);
-        const zelleSum = Number(report.zelle_sum ?? 0);
-        const ccSum = Number(report.cc_sum ?? 0);
-        const venmoSum = Number(report.venmo_sum ?? 0);
-        const heavySum = Number(report.heavy_sum ?? 0);
-        const tipsSum = Number(report.tips_sum ?? 0);
-        const gasSum = Number(report.gas_sum ?? 0);
-        const totalLaborCost = Number(report.total_labor_cost ?? 0);
-        const entries = reportData.entries.filter(entry => entry.worker_name);
-        
-        document.getElementById('main-reports-view').style.display = 'none';
-        document.getElementById('report-details-view').style.display = 'block';
+       const report = reportData.report;
+        const entries = reportData.entries.filter(e => e.worker_name);
 
-        document.getElementById('report-details-title').textContent = `Brakedown No. ${report.job_number} dated ${formatDate(report.report_date)}`;
+        // суми
+        const cashSum   = num(report.cash_sum);
+        const zelleSum  = num(report.zelle_sum);
+        const ccSum     = num(report.cc_sum);
+        const venmoSum  = num(report.venmo_sum);
+        const heavySum  = num(report.heavy_sum);
+        const tipsSum   = num(report.tips_sum);
+        const gasSum    = num(report.gas_sum);
+        const totalLaborCost = num(report.total_labor_cost);
 
-        const heavyWorkersCount = entries.filter(e => e.heavy).length;
+        const heavyWorkersCount = entries.filter(e => bool(e.heavy)).length;
+        const tipsWorkersCount  = entries.filter(e => bool(e.tips)).length;
+        const gasWorkersCount   = entries.filter(e => bool(e.gas)).length;
+
         const companyHeavy = heavyWorkersCount > 0 ? heavySum / (heavyWorkersCount + 1) : 0;
-        const tipsWorkersCount = entries.filter(e => e.tips).length;
-        const perTips = tipsWorkersCount > 0 ? tipsSum / tipsWorkersCount : 0;
-        const gasWorkersCount = entries.filter(e => e.gas).length;
-        const perGas = gasWorkersCount > 0 ? gasSum / gasWorkersCount : 0;
-        const perHeavy = companyHeavy;
+        const perTips      = tipsWorkersCount  > 0 ? tipsSum  / tipsWorkersCount       : 0;
+        const perGas       = gasWorkersCount   > 0 ? gasSum   / gasWorkersCount        : 0;
 
-        const totalPayment = (cashSum + zelleSum + ccSum + venmoSum).toFixed(2);
-        const paymentBreakdown = `Cash: ${cashSum.toFixed(2)}, Zelle: ${zelleSum.toFixed(2)}, CC: ${ccSum.toFixed(2)}, Venmo: ${venmoSum.toFixed(2)}`;
+        const totalPayment = cashSum + zelleSum + ccSum + venmoSum;
+        const paymentBreakdown = `Cash: ${toMoney(cashSum)}, Zelle: ${toMoney(zelleSum)}, CC: ${toMoney(ccSum)}, Venmo: ${toMoney(venmoSum)}`;
 
         document.getElementById('report-summary-info').innerHTML = `
-            <p><strong>Job number:</strong> ${report.job_number}</p>
-            <p><strong>Total labor cost:</strong> ${totalLaborCost.toFixed(2)}</p>
-            <p><strong>Total payments:</strong> ${totalPayment} (${paymentBreakdown})</p>
-            <p><strong>Heavy:</strong> ${heavySum.toFixed(2)}</p>
-            <p><strong>Tips:</strong> ${tipsSum.toFixed(2)}</p>
-            <p><strong>Gas:</strong> ${gasSum.toFixed(2)}</p>
-            <p><strong>Дохід компанії (Heavy):</strong> ${companyHeavy.toFixed(2)}</p>
+        <p><strong>Job number:</strong> ${report.job_number}</p>
+        <p><strong>Total labor cost:</strong> ${toMoney(totalLaborCost)}</p>
+        <p><strong>Total payments:</strong> ${toMoney(totalPayment)} (${paymentBreakdown})</p>
+        <p><strong>Heavy:</strong> ${toMoney(heavySum)}</p>
+        <p><strong>Tips:</strong> ${toMoney(tipsSum)}</p>
+        <p><strong>Gas:</strong> ${toMoney(gasSum)}</p>
+        <p><strong>Дохід компанії (Heavy):</strong> ${toMoney(companyHeavy)}</p>
         `;
 
         const entriesTableBody = document.querySelector('#report-entries-table tbody');
         entriesTableBody.innerHTML = '';
 
         entries.forEach(entry => {
-            const row = document.createElement('tr');
-            const workerName = entry.worker_name;
-            const workerPhone = entry.phone_number || 'Not specified';
-            const hoursWorked = Number(entry.hours_worked ?? 0);
-            const hourlyRate = Number(entry.actual_hourly_rate ?? 0);
-            const basePay = hoursWorked * hourlyRate;
+        const hoursWorked = num(entry.hours_worked);
+        const hourlyRate  = num(entry.actual_hourly_rate);
+        const basePay     = hoursWorked * hourlyRate;
 
-            const heavyValue = entry.heavy ? perHeavy : 0;
-            const tipsValue = entry.tips ? perTips : 0;
-            const gasValue = entry.gas ? perGas : 0;
-            const totalEntryCost = basePay + heavyValue + tipsValue + gasValue;
+        const heavyValue  = bool(entry.heavy) ? companyHeavy : 0;
+        const tipsValue   = bool(entry.tips)  ? perTips      : 0;
+        const gasValue    = bool(entry.gas)   ? perGas       : 0;
 
-            row.innerHTML = `
-                <td>${workerName}</td>
-                <td>${workerPhone}</td>
-                <td>${hoursWorked}</td>
-                <td>${hourlyRate}</td>
-                <td>${heavyValue.toFixed(2)}</td>
-                <td>${tipsValue.toFixed(2)}</td>
-                <td>${gasValue.toFixed(2)}</td>
-                <td>${totalEntryCost.toFixed(2)}</td>
-            `;
-            entriesTableBody.appendChild(row);
+        const totalEntryCost = basePay + heavyValue + tipsValue + gasValue;
+
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${entry.worker_name}</td>
+            <td>${entry.phone_number || 'Not specified'}</td>
+            <td>${hoursWorked}</td>
+            <td>${hourlyRate}</td>
+            <td>${toMoney(heavyValue)}</td>
+            <td>${toMoney(tipsValue)}</td>
+            <td>${toMoney(gasValue)}</td>
+            <td>${toMoney(totalEntryCost)}</td>
+        `;
+        entriesTableBody.appendChild(row);
         });
+
         
         document.getElementById('delete-detailed-btn').dataset.id = reportId;
         document.getElementById('delete-detailed-btn').addEventListener('click', deleteReport);
