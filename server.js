@@ -21,7 +21,7 @@ const pool = new Pool({
 app.use(cors({
   origin: [
     'http://localhost:8080',
-    'https://brakedown.up.railway.app'
+    'https://empowering-enthusiasm-dev.up.railway.app'
   ],
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
 }));
