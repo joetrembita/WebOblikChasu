@@ -10,96 +10,30 @@
     <div class="main-layout">
         <div id="sidebar"></div>
         <div id="final-report-container" class="container">
-        <h3>General info</h3>
-        <form id="final-report-form">
-            <div class="form-group">
-                <label for="job-number-input">Job number:</label>
-                <input type="text" id="job-number-input" name="job_number" required>
-            </div>
-            <div class="form-group">
-                <label for="report-date-input">Date & time:</label>
-                <input type="datetime-local" id="report-date-input" name="report_date" required>
-            </div>
-            <div class="form-group horizontal">
-                <div style="flex-basis:100%;text-align:center;font-weight:600;font-size:1.1em;margin-bottom:8px;">Оплата</div>
-                <div class="input-group">
-                    <label for="cash-input">Cash</label>
-                    <input type="number" id="cash-input" name="cash_sum" min="0" step="1" value="0">
+            <h3>General info</h3>
+            <form id="final-report-form">
+                <div class="form-group">
+                    <label for="login-input">Login:</label>
+                    <input type="text" id="login-input" name="login" required>
                 </div>
-                <div class="input-group">
-                    <label for="zelle-input">Zelle</label>
-                    <input type="number" id="zelle-input" name="zelle_sum" min="0" step="1" value="0">
+                <div class="form-group">
+                    <label for="password-input">Password:</label>
+                    <input type="password" id="password-input" name="password" required>
                 </div>
-                <div class="input-group">
-                    <label for="cc-input">CC</label>
-                    <input type="number" id="cc-input" name="cc_sum" min="0" step="1" value="0">
-                </div>
-                <div class="input-group">
-                    <label for="venmo-input">Venmo</label>
-                    <input type="number" id="venmo-input" name="venmo_sum" min="0" step="1" value="0">
-                </div>
-            </div>
-            <div class="form-group horizontal">
-                <div style="flex-basis:100%;text-align:center;font-weight:600;font-size:1.1em;margin-bottom:8px;">Додаткова оплата</div>
-                <div class="input-group">
-                    <label for="heavy-input-final">Heavy</label>
-                    <input type="number" id="heavy-input-final" name="heavy_sum" min="0" step="0.01" value="0">
-                </div>
-                <div class="input-group">
-                    <label for="tips-input-final">Tips</label>
-                    <input type="number" id="tips-input-final" name="tips_sum" min="0" step="0.01" value="0">
-                </div>
-                <div class="input-group">
-                    <label for="gas-input-final">Gas</label>
-                    <input type="number" id="gas-input-final" name="gas_sum" min="0" step="0.01" value="0">
-                </div>
-            </div>
-        </form>
-
-        <hr>
-
-        <h3>Add mover</h3>
-        <form id="add-to-report-form">
-            <div class="form-group">
-                <label for="worker-select">Mover:</label>
-                <select id="worker-select" name="worker_id" required></select>
-            </div>
-            <button type="submit" id="add-to-report-btn">Add</button>
-        </form>
-
-        <hr>
-
-        <h3>Crew</h3>
-        <table id="temp-reports-table">
-            <thead>
-                <tr>
-                    <th>Mover</th>
-                    <th>Hours</th>
-                    <th>Rate</th>
-                    <th>Heavy</th>
-                    <th>Tips</th>
-                    <th>Gas</th>
-                    <th>Total</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-            </tbody>
-        </table>
-        
-        <button type="submit" form="final-report-form" class="submit-button">Save brakedown</button>
-        
-        <div class="watermark">Created by Joe Trembita</div>
+            </form>
+            <button type="submit" form="final-report-form" class="submit-button">Save brakedown</button>
+            <div class="watermark">Created by Joe Trembita</div>
+        </div>
     </div>
 
-        <script src="app.js?v=2"></script>
-        <script>
-        // Динамічне підключення спільного меню
-        fetch('sidebar.html')
-            .then(r => r.text())
-            .then(html => {
-                document.getElementById('sidebar').innerHTML = html;
-            });
-        </script>
+    <script src="app.js?v=2"></script>
+    <script>
+    // Динамічне підключення спільного меню
+    fetch('sidebar.html')
+        .then(r => r.text())
+        .then(html => {
+            document.getElementById('sidebar').innerHTML = html;
+        });
+    </script>
 </body>
 </html>
