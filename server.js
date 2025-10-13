@@ -3,32 +3,55 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { Pool } = require('pg');
+const { Pool, types } = require('pg');
+
+types.setTypeParser(1700, v => (v == null ? null : parseFloat(v)));
+types.setTypeParser(20,   v => (v == null ? null : parseInt(v, 10)));
+types.setTypeParser(23,   v => (v == null ? null : parseInt(v, 10)));
 
 const app = express();
-
-// 1) Порт для Railway / будь-якого PaaS
 const PORT = process.env.PORT || 3000;
+const BUILD = process.env.RAILWAY_GIT_COMMIT_SHA || 'dev';
 
-// 2) Підключення до Postgres (Railway надає DATABASE_URL)
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  // Якщо провайдер вимагає SSL (інколи потрібно):
-  // ssl: { rejectUnauthorized: false }
-});
+const allowed = (process.env.ALLOWED_ORIGINS || '')
+  .split(',')
+  .map(s => s.trim())
+  .filter(Boolean);
 
-// 3) Базові мідлвари і, за потреби, статика (можеш прибрати, якщо фронт на Hostinger)
 app.use(cors({
-  origin: [
-    'http://localhost:8080',
-    'https://brakedown.up.railway.app'
-  ],
+  origin(origin, cb) {
+    if (!origin) return cb(null, true);
+    if (allowed.includes(origin)) return cb(null, true);
+    return cb(null, false);
+  },
   methods: ['GET','POST','PUT','DELETE','OPTIONS'],
 }));
+
+app.get('/env.js', (req, res) => {
+  res.type('application/javascript');
+  const apiBase = process.env.PUBLIC_API_BASE_URL || '';
+  res.send(
+    `window.__APP_CONFIG__ = { API_BASE_URL: ${JSON.stringify(apiBase)} };
+     window.__APP_BUILD__ = ${JSON.stringify(BUILD)};`
+  );
+});
+
 app.use(express.json());
+app.use((req, res, next) => {
+  if (/\.(js|css|html|map|json)$/i.test(req.path)) {
+    res.setHeader('Cache-Control', 'no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+  }
+  next();
+});
 app.use(express.static('frontend'));
 
-// 4) Ініціалізація схеми (одноразово; "IF NOT EXISTS" — безпечний)
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  // ssl: { rejectUnauthorized: false },
+});
+
 async function initSchema() {
   const client = await pool.connect();
   try {
@@ -44,7 +67,6 @@ async function initSchema() {
       );
     `);
 
-    // final_reports — заголовок звіту
     await client.query(`
       CREATE TABLE IF NOT EXISTS final_reports (
         id SERIAL PRIMARY KEY,
@@ -61,9 +83,6 @@ async function initSchema() {
       );
     `);
 
-    // report_entries — рядки звіту
-    // worker_id: якщо працівника видалили — SET NULL
-    // final_report_id: якщо звіт видалили — CASCADE (рядки підуть за ним)
     await client.query(`
       CREATE TABLE IF NOT EXISTS report_entries (
         id SERIAL PRIMARY KEY,
@@ -99,7 +118,6 @@ async function initSchema() {
   }
 }
 
-// 5) Утиліта логування дій
 async function logAction(action, details) {
   try {
     await pool.query(
@@ -111,12 +129,8 @@ async function logAction(action, details) {
   }
 }
 
-// 6) Health-check
 app.get('/health', (req, res) => res.send('ok'));
 
-// 7) Маршрути
-
-// A) Отримати всі нарахування (JOIN) — heavy/tips/gas/paid віддамо як 0/1 для сумісності з фронтом
 app.get('/salary-entries', async (req, res) => {
   const sql = `
     SELECT 
@@ -144,7 +158,6 @@ app.get('/salary-entries', async (req, res) => {
   }
 });
 
-// B) Оновити статус paid для конкретного запису report_entries
 app.put('/salary-entries/:id/paid', async (req, res) => {
   const { id } = req.params;
   const { paid } = req.body;
@@ -156,7 +169,6 @@ app.put('/salary-entries/:id/paid', async (req, res) => {
   }
 });
 
-// C) Список працівників
 app.get('/workers', async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -168,7 +180,6 @@ app.get('/workers', async (req, res) => {
   }
 });
 
-// D) Додати працівника
 app.post('/workers', async (req, res) => {
   const { name, phone_number, email, default_hourly_rate } = req.body;
   if (!name || default_hourly_rate == null) {
@@ -187,7 +198,6 @@ app.post('/workers', async (req, res) => {
   }
 });
 
-// E) Оновити працівника
 app.put('/workers/:id', async (req, res) => {
   const { id } = req.params;
   const { name, phone_number, email, default_hourly_rate } = req.body;
@@ -206,7 +216,6 @@ app.put('/workers/:id', async (req, res) => {
   }
 });
 
-// F) Видалити працівника (worker_id у report_entries стане NULL завдяки ON DELETE SET NULL)
 app.delete('/workers/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -219,7 +228,6 @@ app.delete('/workers/:id', async (req, res) => {
   }
 });
 
-// G) Список фінальних звітів (з агрегатами)
 app.get('/final-reports', async (req, res) => {
   const sql = `
     SELECT 
@@ -244,14 +252,12 @@ app.get('/final-reports', async (req, res) => {
   }
 });
 
-// H) Створити фінальний звіт з рядками (транзакція)
 app.post('/final-reports', async (req, res) => {
   let { job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, reports, total_labor_cost } = req.body;
   if (!job_number || !Array.isArray(reports) || reports.length === 0) {
     return res.status(400).json({ error: 'Job number and reports are required' });
   }
 
-  // уніфікуємо дату до "YYYY-MM-DDTHH:mm"
   function toIsoMinute(s) {
     const d = s ? new Date(s) : new Date();
     if (isNaN(d.getTime())) return null;
@@ -269,7 +275,6 @@ app.post('/final-reports', async (req, res) => {
   try {
     await client.query('BEGIN');
 
-    // перевірка унікальності job_number
     const existing = await client.query(`SELECT id FROM final_reports WHERE job_number=$1`, [job_number]);
     if (existing.rowCount) {
       await client.query('ROLLBACK');
@@ -320,7 +325,6 @@ app.post('/final-reports', async (req, res) => {
   }
 });
 
-// I) Оновлення фінального звіту (перезапис рядків)
 app.put('/final-reports/:id', async (req, res) => {
   const { id } = req.params;
   let { job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, reports, total_labor_cost } = req.body;
@@ -371,7 +375,6 @@ app.put('/final-reports/:id', async (req, res) => {
   }
 });
 
-// J) Один звіт + його рядки
 app.get('/final-reports/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -401,11 +404,9 @@ app.get('/final-reports/:id', async (req, res) => {
   }
 });
 
-// K) Видалити фінальний звіт (рядки видаляться завдяки ON DELETE CASCADE)
 app.delete('/final-reports/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    // отримаємо job_number для логів
     const r = await pool.query(`DELETE FROM final_reports WHERE id=$1 RETURNING job_number`, [id]);
     if (!r.rowCount) return res.status(404).json({ error: 'Report not found' });
     await logAction('DELETE_REPORT', `Видалено звіт з номером ${r.rows[0].job_number} (ID: ${id})`);
@@ -415,7 +416,6 @@ app.delete('/final-reports/:id', async (req, res) => {
   }
 });
 
-// L) Логи
 app.get('/logs', async (req, res) => {
   try {
     const { rows } = await pool.query(`SELECT action, details, timestamp FROM logs ORDER BY timestamp DESC`);
@@ -442,7 +442,6 @@ app.post('/logs', async (req, res) => {
   res.status(201).json({ message: 'Log entry created successfully' });
 });
 
-// 8) Запускаємо сервер і схему
 initSchema()
   .then(() => app.listen(PORT, () => console.log(`Server is running on port ${PORT}`)))
   .catch(err => {
