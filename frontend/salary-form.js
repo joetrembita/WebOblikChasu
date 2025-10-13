@@ -1,6 +1,5 @@
 // salary-form.js
 // Отримує дані з параметрів URL і підставляє у форму
-const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
 
 let allEntries = [];
 let filters = {};
