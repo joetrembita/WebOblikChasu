@@ -1,7 +1,7 @@
 // edit-report.js
 // Логіка для створення/редагування звіту: заповнення, розрахунки, збереження
 
-const backendUrl = 'http://localhost:3000';
+const backendUrl = '';
 
 // --- Заповнення списку працівників ---
 async function loadWorkers() {

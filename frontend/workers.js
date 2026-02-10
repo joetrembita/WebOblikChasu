@@ -1,4 +1,4 @@
-const backendUrl = 'http://localhost:3000';
+const backendUrl = '';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadWorkers();

@@ -1,4 +1,4 @@
-const backendUrl = 'http://localhost:3000';
+const backendUrl = '';
 let tempReports = [];
 
 document.addEventListener('DOMContentLoaded', () => {
