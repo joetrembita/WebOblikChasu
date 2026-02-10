@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 
 const app = express();
-const port = 3000;
+const PORT = process.env.PORT || 3000;
 
 app.use(cors());
 app.use(express.json());
@@ -468,6 +468,6 @@ app.post('/logs', (req, res) => {
     res.status(201).json({ message: "Log entry created successfully" });
 });
 
-app.listen(port, () => {
-    console.log(`Server is running at http://localhost:${port}`);
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
 });
