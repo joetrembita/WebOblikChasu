@@ -18,17 +18,20 @@
                 </div>
                 <div class="form-group horizontal">
                     <label for="report-date-input" style="min-width:140px;">Date & time:</label>
-                    <input type="datetime-local" id="report-date-input" name="report_date" required>
+                    <input type="date" lang="en-US" id="report-date-input" name="report_date" required>
+
+                    <label for="default-hours-input" style="min-width:80px; margin-left:18px;">Duration:</label>
+                    <input type="time" id="default-hours-input" step="900" value="00:00">
                 </div>
                 <div class="form-group horizontal payment-row">
                     <label for="cash-input" style="min-width:80px;">Cash:</label>
-                    <input type="number" id="cash-input" name="cash_sum" min="0" step="1" value="0">
+                    <input type="number" id="cash-input" name="cash_sum" min="0" step="0.01" value="0">
                     <label for="zelle-input" style="min-width:80px; margin-left:18px;">Zelle:</label>
-                    <input type="number" id="zelle-input" name="zelle_sum" min="0" step="1" value="0">
+                    <input type="number" id="zelle-input" name="zelle_sum" min="0" step="0.01" value="0">
                     <label for="cc-input" style="min-width:80px; margin-left:18px;">CC:</label>
-                    <input type="number" id="cc-input" name="cc_sum" min="0" step="1" value="0">
+                    <input type="number" id="cc-input" name="cc_sum" min="0" step="0.01" value="0">
                     <label for="venmo-input" style="min-width:80px; margin-left:18px;">Venmo:</label>
-                    <input type="number" id="venmo-input" name="venmo_sum" min="0" step="1" value="0">
+                    <input type="number" id="venmo-input" name="venmo_sum" min="0" step="0.01" value="0">
                 </div>
                 <div class="form-group horizontal extra-row">
                     <label for="heavy-input-final" style="min-width:80px;">Heavy item:</label>

@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .then(data => {
                     const report = data.report;
                     document.getElementById('job-number-input').value = report.job_number;
-                    document.getElementById('report-date-input').value = report.report_date.slice(0,16);
+                    document.getElementById('report-date-input').value = report.report_date.slice(0,10);
                     document.getElementById('cash-input').value = report.cash_sum;
                     document.getElementById('zelle-input').value = report.zelle_sum;
                     document.getElementById('cc-input').value = report.cc_sum;
@@ -99,6 +99,40 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    document.getElementById('add-to-report-form').addEventListener('submit', (event) => {
+    event.preventDefault();
+
+        const workerSelect = document.getElementById('worker-select');
+        const workerId = workerSelect.value;
+        const workerName = workerSelect.options[workerSelect.selectedIndex].text;
+    
+        const timeValue = document.getElementById('default-hours-input').value; // Наприклад "02:15"
+        let hoursDecimal = 0;
+
+    if (timeValue) {
+        const [hours, minutes] = timeValue.split(':').map(Number);
+        hoursDecimal = hours + (minutes / 60);
+    }
+
+    if (tempReports.some(r => r.worker_id == workerId)) {
+        alert('This mover is already added.');
+        return;
+    }
+
+        const rate = parseFloat(document.getElementById('rate-input').value) || 0;
+
+        tempReports.push({
+            worker_id: workerId,
+            worker_name: workerName,
+            hours: hoursDecimal, 
+            rate: rate,
+            heavy: false,
+            tips: false,
+            gas: false
+        });
+
+    renderTempReports();
+    });
     document.getElementById('add-to-report-form').addEventListener('submit', e => {
         e.preventDefault();
         const select = document.getElementById('worker-select');
