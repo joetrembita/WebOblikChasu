@@ -1,253 +1,250 @@
-const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
-
-// === helpers ===
-const num = (v) => {
-  if (v == null) return 0;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : 0;
-};
-const toMoney = (v) => num(v).toFixed(2);
-const toInt = (v) => parseInt(v, 10) || 0;
-const bool = (v) => v === true || v === 1 || v === '1' || v === 't' || v === 'true';
+const backendUrl = '';
 
 function formatDate(dateString) {
-  if (!dateString) return 'Invalid data';
-  const normalizedDateString = String(dateString);
-  let date = new Date(normalizedDateString);
-  if (normalizedDateString.endsWith('Z')) {
-    const offsetMs = date.getTimezoneOffset() * 60 * 1000;
-    date = new Date(date.getTime() - offsetMs);
-  }
-  if (isNaN(date)) return 'Invalid data';
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${day}.${month}.${year} ${hours}:${minutes}`;
+    console.log('Inscomig dateString:', dateString);
+    let date = new Date(dateString);
+    if (dateString.endsWith('Z')) {
+        const offsetMs = date.getTimezoneOffset() * 60 * 1000;
+        date = new Date(date.getTime() - offsetMs);
+    }
+    if (isNaN(date)) {
+        return 'Invalid data';
+    }
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const formattedDate = `${day}.${month}.${year} ${hours}:${minutes}`;
+    console.log('Formated date:', formattedDate);
+    return formattedDate;
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  const backToReportsLink = document.getElementById('back-to-reports-link');
-  if (backToReportsLink) {
-    backToReportsLink.addEventListener('click', () => {
-      document.getElementById('main-reports-view').style.display = 'block';
-      document.getElementById('report-details-view').style.display = 'none';
-    });
-  }
-
-  // Делегування подій для кнопок у таблиці
-  document.addEventListener('click', (e) => {
-    const viewBtn = e.target.closest('button.view-details-btn');
-    if (viewBtn) {
-      const id = viewBtn.dataset.id;
-      if (id) showReportDetails(id);
-      return;
+    const backToReportsLink = document.getElementById('back-to-reports-link');
+    if (backToReportsLink) {
+        backToReportsLink.addEventListener('click', () => {
+            document.getElementById('main-reports-view').style.display = 'block';
+            document.getElementById('report-details-view').style.display = 'none';
+        });
+    } else {
+        console.error("Element 'back-to-reports-link' not found.");
     }
-    const delBtn = e.target.closest('button.delete-btn');
-    if (delBtn) {
-      const id = delBtn.dataset.id;
-      if (id) deleteReportById(id);
-      return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const openId = urlParams.get('open');
+    if (openId) {
+        showReportDetails(openId);
+    } else {
+        loadReports();
     }
-  });
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const openId = urlParams.get('open');
-  if (openId) {
-    showReportDetails(openId);
-  } else {
-    loadReports();
-  }
-
-  const createBtn = document.getElementById('create-report-btn');
-  if (createBtn) {
-    createBtn.addEventListener('click', () => {
-      window.location.href = 'edit-report.html';
-    });
-  }
+    const createBtn = document.getElementById('create-report-btn');
+    if (createBtn) {
+        createBtn.addEventListener('click', () => {
+            window.location.href = 'edit-report.html';
+        });
+    }
 });
 
 async function loadReports() {
-  try {
-    const response = await fetch(`${API}/final-reports`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const finalReports = await response.json();
+    try {
+        const response = await fetch(`${backendUrl}/final-reports`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const finalReports = await response.json();
+        console.log('Brakedowns:', finalReports);
 
-    const table = document.querySelector('#reports-table-container table');
-    const reportsTableBody = table ? table.querySelector('tbody') : null;
-    if (!reportsTableBody) return;
+        const table = document.querySelector('#reports-table-container table');
+        const reportsTableBody = table ? table.querySelector('tbody') : null;
 
-    reportsTableBody.innerHTML = '';
-    if (!finalReports.length) {
-      reportsTableBody.innerHTML = '<tr><td colspan="6">Saved breakdowns not found.</td></tr>';
-      return;
+        if (!reportsTableBody) {
+            console.error("Element 'reports-table-container tbody' not found.");
+            return;
+        }
+
+        reportsTableBody.innerHTML = '';
+        if (finalReports.length === 0) {
+            reportsTableBody.innerHTML = '<tr><td colspan="6">Saved brakedowns not found.</td></tr>';
+            return;
+        }
+
+        finalReports.forEach(report => {
+            const totalCost = report.total_cost == null ? 0 : report.total_cost;
+            const row = document.createElement('tr');
+            row.innerHTML = `
+                <td>${report.job_number}</td>
+                <td>${report.worker_count}</td>
+                <td>${(totalCost).toFixed(2)}</td>
+                <td>${report.cash_sum != null ? report.cash_sum.toFixed(2) : '0.00'}</td>
+                <td>${formatDate(report.report_date)}</td>
+                <td class="action-buttons">
+                    <button class="view-details-btn" data-id="${report.id}">View/Edit</button>
+                    <button class="delete-btn" data-id="${report.id}">Delete</button>
+                </td>
+            `;
+            reportsTableBody.appendChild(row);
+        });
+
+        document.querySelectorAll('.view-details-btn').forEach(btn => {
+            btn.addEventListener('click', (event) => showReportDetails(event.target.dataset.id));
+        });
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', deleteReport);
+        });
+    } catch (error) {
+        console.error('Brakedown loading error:', error);
     }
-
-    finalReports.forEach(report => {
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${report.job_number}</td>
-        <td>${toInt(report.worker_count)}</td>
-        <td>${toMoney(report.total_cost)}</td>
-        <td>${toMoney(report.cash_sum)}</td>
-        <td>${formatDate(report.report_date)}</td>
-        <td class="action-buttons">
-          <button type="button" class="view-details-btn" data-id="${report.id}">View/Edit</button>
-          <button type="button" class="delete-btn" data-id="${report.id}">Delete</button>
-        </td>
-      `;
-      reportsTableBody.appendChild(row);
-    });
-  } catch (error) {
-    console.error('Breakdown loading error:', error);
-  }
 }
 
 async function showReportDetails(reportId) {
-  try {
-    const response = await fetch(`${API}/final-reports/${reportId}`);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const reportData = await response.json();
-
-    // Показати деталі, сховати список
-    document.getElementById('main-reports-view').style.display = 'none';
-    document.getElementById('report-details-view').style.display = 'block';
-
-    const report = reportData.report;
-    const entries = reportData.entries.filter(e => e.worker_name);
-
-    const cashSum   = num(report.cash_sum);
-    const zelleSum  = num(report.zelle_sum);
-    const ccSum     = num(report.cc_sum);
-    const venmoSum  = num(report.venmo_sum);
-    const heavySum  = num(report.heavy_sum);
-    const tipsSum   = num(report.tips_sum);
-    const gasSum    = num(report.gas_sum);
-    const totalLaborCost = num(report.total_labor_cost);
-
-    const heavyWorkersCount = entries.filter(e => bool(e.heavy)).length;
-    const tipsWorkersCount  = entries.filter(e => bool(e.tips)).length;
-    const gasWorkersCount   = entries.filter(e => bool(e.gas)).length;
-
-    const companyHeavy = heavyWorkersCount > 0 ? heavySum / (heavyWorkersCount + 1) : 0;
-    const perTips      = tipsWorkersCount  > 0 ? tipsSum  / tipsWorkersCount       : 0;
-    const perGas       = gasWorkersCount   > 0 ? gasSum   / gasWorkersCount        : 0;
-
-    const totalPayment = cashSum + zelleSum + ccSum + venmoSum;
-    const paymentBreakdown = `Cash: ${toMoney(cashSum)}, Zelle: ${toMoney(zelleSum)}, CC: ${toMoney(ccSum)}, Venmo: ${toMoney(venmoSum)}`;
-
-    document.getElementById('report-summary-info').innerHTML = `
-      <p><strong>Job number:</strong> ${report.job_number}</p>
-      <p><strong>Total labor cost:</strong> ${toMoney(totalLaborCost)}</p>
-      <p><strong>Total payments:</strong> ${toMoney(totalPayment)} (${paymentBreakdown})</p>
-      <p><strong>Heavy:</strong> ${toMoney(heavySum)}</p>
-      <p><strong>Tips:</strong> ${toMoney(tipsSum)}</p>
-      <p><strong>Gas:</strong> ${toMoney(gasSum)}</p>
-      <p><strong>Company income (Heavy):</strong> ${toMoney(companyHeavy)}</p>
-    `;
-
-    const entriesTableBody = document.querySelector('#report-entries-table tbody');
-    entriesTableBody.innerHTML = '';
-
-    entries.forEach(entry => {
-      const hoursWorked = num(entry.hours_worked);
-      const hourlyRate  = num(entry.actual_hourly_rate);
-      const basePay     = hoursWorked * hourlyRate;
-
-      const heavyValue  = bool(entry.heavy) ? companyHeavy : 0;
-      const tipsValue   = bool(entry.tips)  ? perTips      : 0;
-      const gasValue    = bool(entry.gas)   ? perGas       : 0;
-
-      const totalEntryCost = basePay + heavyValue + tipsValue + gasValue;
-
-      const row = document.createElement('tr');
-      row.innerHTML = `
-        <td>${entry.worker_name}</td>
-        <td>${entry.phone_number || 'Not specified'}</td>
-        <td>${hoursWorked}</td>
-        <td>${hourlyRate}</td>
-        <td>${toMoney(heavyValue)}</td>
-        <td>${toMoney(tipsValue)}</td>
-        <td>${toMoney(gasValue)}</td>
-        <td>${toMoney(totalEntryCost)}</td>
-      `;
-      entriesTableBody.appendChild(row);
-    });
-
-    // Кнопки в детальному вигляді
-    const delBtn = document.getElementById('delete-detailed-btn');
-    if (delBtn) delBtn.onclick = () => deleteReportById(reportId);
-
-    const editBtn = document.getElementById('edit-detailed-btn');
-    if (editBtn) editBtn.onclick = () => {
-      window.location.href = `edit-report.html?id=${reportId}`;
-    };
-
-    const approveBtn = document.getElementById('approve-detailed-btn');
-    if (approveBtn) approveBtn.onclick = async () => {
-      try {
-        const logResponse = await fetch(`${API}/logs`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'APPROVE_REPORT', details: `approved №${report.job_number}` })
-        });
-        if (!logResponse.ok) {
-          const errorData = await logResponse.json();
-          throw new Error(`HTTP ${logResponse.status} ${errorData.error || ''}`);
+    try {
+        const response = await fetch(`${backendUrl}/final-reports/${reportId}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
         }
-      } catch (error) {
-        console.error('Approving log error:', error);
-        alert('Log saving error. Breakdown successfully approved');
-      }
+        const reportData = await response.json();
+        console.log('Brakedown data:', reportData);
+        
+        const report = reportData.report;
+        const entries = reportData.entries.filter(entry => entry.worker_name);
+        
+        document.getElementById('main-reports-view').style.display = 'none';
+        document.getElementById('report-details-view').style.display = 'block';
 
-      const existingEntries = JSON.parse(localStorage.getItem('approvedSalaryEntries') || '[]');
-      const existingJobNumbers = new Set(existingEntries.map(e => e.job_number));
-      if (existingJobNumbers.has(report.job_number)) {
-        alert(`Breakdown for job ${report.job_number} was already approved.`);
-        return;
-      }
+        document.getElementById('report-details-title').textContent = `Brakedown No. ${report.job_number} dated ${formatDate(report.report_date)}`;
 
-      const existingIds = new Set(existingEntries.map(e => e.id));
-      const newEntries = reportData.entries
-        .filter(entry => entry.worker_name && !existingIds.has(entry.id))
-        .map(entry => ({
-          ...entry,
-          job_number: report.job_number,
-          sum: (
-            num(entry.hours_worked) * num(entry.actual_hourly_rate) +
-            (bool(entry.heavy) ? companyHeavy : 0) +
-            (bool(entry.tips)  ? perTips      : 0) +
-            (bool(entry.gas)   ? perGas       : 0)
-          ).toFixed(2)
-        }));
+        const heavyWorkersCount = entries.filter(e => e.heavy).length;
+        const companyHeavy = heavyWorkersCount > 0 ? report.heavy_sum / (heavyWorkersCount + 1) : 0;
+        const tipsWorkersCount = entries.filter(e => e.tips).length;
+        const perTips = tipsWorkersCount > 0 ? report.tips_sum / tipsWorkersCount : 0;
+        const gasWorkersCount = entries.filter(e => e.gas).length;
+        const perGas = gasWorkersCount > 0 ? report.gas_sum / gasWorkersCount : 0;
+        const perHeavy = companyHeavy;
 
-      const updatedEntries = newEntries.concat(existingEntries);
-      localStorage.setItem('approvedSalaryEntries', JSON.stringify(updatedEntries));
-      window.open('salary-form.html', '_blank');
-    };
+        const totalPayment = (report.cash_sum + report.zelle_sum + report.cc_sum + report.venmo_sum).toFixed(2);
+        const paymentBreakdown = `Cash: ${report.cash_sum.toFixed(2)}, Zelle: ${report.zelle_sum.toFixed(2)}, CC: ${report.cc_sum.toFixed(2)}, Venmo: ${report.venmo_sum.toFixed(2)}`;
 
-  } catch (error) {
-    console.error('Loading breakdown details error:', error);
-  }
+        document.getElementById('report-summary-info').innerHTML = `
+            <p><strong>Job number:</strong> ${report.job_number}</p>
+            <p><strong>Total labor cost:</strong> ${report.total_labor_cost.toFixed(2)}</p>
+            <p><strong>Total payments:</strong> ${totalPayment} (${paymentBreakdown})</p>
+            <p><strong>Heavy:</strong> ${report.heavy_sum.toFixed(2)}</p>
+            <p><strong>Tips:</strong> ${report.tips_sum.toFixed(2)}</p>
+            <p><strong>Gas:</strong> ${report.gas_sum.toFixed(2)}</p>
+            <p><strong>Дохід компанії (Heavy):</strong> ${companyHeavy.toFixed(2)}</p>
+        `;
+
+        const entriesTableBody = document.querySelector('#report-entries-table tbody');
+        entriesTableBody.innerHTML = '';
+
+        entries.forEach(entry => {
+            const row = document.createElement('tr');
+            const workerName = entry.worker_name;
+            const workerPhone = entry.phone_number || 'Not specified';
+            const basePay = entry.hours_worked * entry.actual_hourly_rate;
+            
+            const heavyValue = entry.heavy ? perHeavy : 0;
+            const tipsValue = entry.tips ? perTips : 0;
+            const gasValue = entry.gas ? perGas : 0;
+            const totalEntryCost = basePay + heavyValue + tipsValue + gasValue;
+
+            row.innerHTML = `
+                <td>${workerName}</td>
+                <td>${workerPhone}</td>
+                <td>${entry.hours_worked}</td>
+                <td>${entry.actual_hourly_rate}</td>
+                <td>${heavyValue.toFixed(2)}</td>
+                <td>${tipsValue.toFixed(2)}</td>
+                <td>${gasValue.toFixed(2)}</td>
+                <td>${totalEntryCost.toFixed(2)}</td>
+            `;
+            entriesTableBody.appendChild(row);
+        });
+        
+        document.getElementById('delete-detailed-btn').dataset.id = reportId;
+        document.getElementById('delete-detailed-btn').addEventListener('click', deleteReport);
+
+        const editBtn = document.getElementById('edit-detailed-btn');
+        if (editBtn) {
+            editBtn.onclick = () => {
+                window.location.href = `edit-report.html?id=${reportId}`;
+            };
+        }
+
+        const approveBtn = document.getElementById('approve-detailed-btn');
+        if (approveBtn) {
+            approveBtn.onclick = async () => {
+                try {
+                    const logResponse = await fetch(`${backendUrl}/logs`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            action: 'APPROVE_REPORT',
+                            details: `approved №${report.job_number}`
+                        })
+                    });
+                    if (!logResponse.ok) {
+                        const errorData = await logResponse.json();
+                        throw new Error(`HTTP error! Status: ${logResponse.status}, Message: ${errorData.error || 'Unknown error'}`);
+                    }
+                    console.log('Log saved for APPROVE_REPORT');
+                } catch (error) {
+                    console.error('Approving log error:', error);
+                    alert('Log saving error. Brakedown sucsessfully approved');
+                }
+
+                const existingEntries = JSON.parse(localStorage.getItem('approvedSalaryEntries') || '[]');
+                const existingJobNumbers = new Set(existingEntries.map(e => e.job_number));
+
+                if (existingJobNumbers.has(report.job_number)) {
+                    alert(`Brakedown for job ${report.job_number} was already approved.`);
+                    return;
+                }
+
+                const existingIds = new Set(existingEntries.map(e => e.id));
+                const newEntries = reportData.entries
+                    .filter(entry => entry.worker_name && !existingIds.has(entry.id))
+                    .map(entry => ({
+                        ...entry,
+                        job_number: report.job_number,
+                        sum: (entry.hours_worked * entry.actual_hourly_rate + (entry.heavy ? perHeavy : 0) + (entry.tips ? perTips : 0) + (entry.gas ? perGas : 0)).toFixed(2)
+                    }));
+
+                const updatedEntries = newEntries.concat(existingEntries);
+                localStorage.setItem('approvedSalaryEntries', JSON.stringify(updatedEntries));
+                window.open('salary-form.html', '_blank');
+            };
+        }
+    } catch (error) {
+        console.error('Loading brakedown datails error:', error);
+    }
 }
 
-async function deleteReportById(reportId) {
-  const confirmDelete = confirm('Are you sure you want to delete breakdown?');
-  if (!confirmDelete) return;
+async function deleteReport(event) {
+    const reportId = event.target.dataset.id;
+    const confirmDelete = confirm('Are you shure you want to delete brakedown?');
 
-  try {
-    const response = await fetch(`${API}/final-reports/${reportId}`, { method: 'DELETE' });
-    if (response.ok) {
-      document.getElementById('main-reports-view').style.display = 'block';
-      document.getElementById('report-details-view').style.display = 'none';
-      loadReports();
-    } else {
-      const errorData = await response.json();
-      alert(`Breakdown deleting error: ${errorData.error || 'Unknown error'}`);
+    if (confirmDelete) {
+        try {
+            const response = await fetch(`${backendUrl}/final-reports/${reportId}`, {
+                method: 'DELETE'
+            });
+
+            if (response.ok) {
+                document.getElementById('main-reports-view').style.display = 'block';
+                document.getElementById('report-details-view').style.display = 'none';
+                loadReports();
+            } else {
+                const errorData = await response.json();
+                alert(`Brakedown deleting error: ${errorData.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Brakedown deleting error:', error);
+            alert('Brakedown deleting error.');
+        }
     }
-  } catch (error) {
-    console.error('Breakdown deleting error:', error);
-    alert('Breakdown deleting error.');
-  }
 }

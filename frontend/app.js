@@ -1,5 +1,4 @@
-const backendUrl = 'http://localhost:3000';
-const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
+const backendUrl = '';
 let tempReports = [];
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -13,7 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadWorkers() {
     try {
-        const response = await fetch(`${API}/workers`);
+        const response = await fetch(`${backendUrl}/workers`);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -184,7 +183,7 @@ document.getElementById('final-report-form').addEventListener('submit', async (e
     }
 
     try {
-        const response = await fetch(`${API}/final-reports`);
+        const response = await fetch(`${backendUrl}/final-reports`);
         if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
@@ -251,7 +250,7 @@ document.getElementById('final-report-form').addEventListener('submit', async (e
     };
 
     try {
-        const response = await fetch(`${API}/final-reports`, {
+        const response = await fetch(`${backendUrl}/final-reports`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'

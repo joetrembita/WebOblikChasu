@@ -1,451 +1,473 @@
-require('dotenv').config();
-
 const express = require('express');
+const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
-const path = require('path');
-const { Pool } = require('pg');
 
 const app = express();
-
-// 1) Порт для Railway / будь-якого PaaS
 const PORT = process.env.PORT || 3000;
 
-// 2) Підключення до Postgres (Railway надає DATABASE_URL)
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  // Якщо провайдер вимагає SSL (інколи потрібно):
-  // ssl: { rejectUnauthorized: false }
-});
-
-// 3) Базові мідлвари і, за потреби, статика (можеш прибрати, якщо фронт на Hostinger)
-app.use(cors({
-  origin: [
-    'http://localhost:8080',
-    'https://brakedown.up.railway.app'
-  ],
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
-}));
+app.use(cors());
 app.use(express.json());
 app.use(express.static('frontend'));
 
-// 4) Ініціалізація схеми (одноразово; "IF NOT EXISTS" — безпечний)
-async function initSchema() {
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
+// Отримати всі нарахування зарплат (JOIN final_reports, report_entries, workers)
+app.get('/salary-entries', (req, res) => {
+    const sql = `
+        SELECT report_entries.id, final_reports.job_number, final_reports.report_date, workers.name AS worker_name, report_entries.hours_worked, report_entries.actual_hourly_rate, report_entries.additional_cost, report_entries.heavy, report_entries.tips, report_entries.gas, report_entries.paid
+        FROM report_entries
+        LEFT JOIN final_reports ON report_entries.final_report_id = final_reports.id
+        LEFT JOIN workers ON report_entries.worker_id = workers.id
+        ORDER BY final_reports.report_date DESC, final_reports.job_number DESC, report_entries.id DESC
+    `;
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
+});
 
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS workers (
-        id SERIAL PRIMARY KEY,
+// Оновити статус paid для конкретного запису report_entries
+app.put('/salary-entries/:id/paid', (req, res) => {
+    const { id } = req.params;
+    const { paid } = req.body;
+    db.run('UPDATE report_entries SET paid = ? WHERE id = ?', [paid ? 1 : 0, id], function(err) {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.status(200).json({ id, paid: paid ? 1 : 0 });
+    });
+});
+
+const db = new sqlite3.Database('./database.db', (err) => {
+    if (err) {
+        console.error(err.message);
+    }
+    console.log('Connected to the database.');
+});
+
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS workers (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         phone_number TEXT,
         email TEXT,
-        default_hourly_rate NUMERIC(10,2) NOT NULL
-      );
-    `);
+        default_hourly_rate REAL NOT NULL
+    )`);
 
-    // final_reports — заголовок звіту
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS final_reports (
-        id SERIAL PRIMARY KEY,
-        job_number TEXT NOT NULL UNIQUE,
-        report_date TIMESTAMP NOT NULL,
-        cash_sum   NUMERIC(10,2) DEFAULT 0,
-        zelle_sum  NUMERIC(10,2) DEFAULT 0,
-        cc_sum     NUMERIC(10,2) DEFAULT 0,
-        venmo_sum  NUMERIC(10,2) DEFAULT 0,
-        heavy_sum  NUMERIC(10,2) DEFAULT 0,
-        tips_sum   NUMERIC(10,2) DEFAULT 0,
-        gas_sum    NUMERIC(10,2) DEFAULT 0,
-        total_labor_cost NUMERIC(10,2) DEFAULT 0
-      );
-    `);
+    db.run(`CREATE TABLE IF NOT EXISTS final_reports (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        job_number TEXT NOT NULL,
+        report_date TEXT NOT NULL,
+        cash_sum REAL DEFAULT 0,
+        zelle_sum REAL DEFAULT 0,
+        cc_sum REAL DEFAULT 0,
+        venmo_sum REAL DEFAULT 0,
+        heavy_sum REAL DEFAULT 0,
+        tips_sum REAL DEFAULT 0,
+        gas_sum REAL DEFAULT 0,
+        total_labor_cost REAL DEFAULT 0
+    )`);
 
-    // report_entries — рядки звіту
-    // worker_id: якщо працівника видалили — SET NULL
-    // final_report_id: якщо звіт видалили — CASCADE (рядки підуть за ним)
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS report_entries (
-        id SERIAL PRIMARY KEY,
-        final_report_id INTEGER REFERENCES final_reports(id) ON DELETE CASCADE,
-        worker_id INTEGER REFERENCES workers(id) ON DELETE SET NULL,
-        hours_worked NUMERIC(10,2) NOT NULL,
-        actual_hourly_rate NUMERIC(10,2) NOT NULL,
-        additional_cost NUMERIC(10,2) DEFAULT 0,
-        heavy BOOLEAN DEFAULT FALSE,
-        tips  BOOLEAN DEFAULT FALSE,
-        gas   BOOLEAN DEFAULT FALSE,
-        paid  BOOLEAN DEFAULT FALSE
-      );
-    `);
+    db.run(`CREATE TABLE IF NOT EXISTS report_entries (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        final_report_id INTEGER,
+        worker_id INTEGER,
+        hours_worked REAL NOT NULL,
+        actual_hourly_rate REAL NOT NULL,
+        additional_cost REAL DEFAULT 0,
+        heavy INTEGER DEFAULT 0,
+        tips INTEGER DEFAULT 0,
+        gas INTEGER DEFAULT 0,
+        paid INTEGER DEFAULT 0,
+        FOREIGN KEY (final_report_id) REFERENCES final_reports(id),
+        FOREIGN KEY (worker_id) REFERENCES workers(id)
+    )`);
 
-    await client.query(`
-      CREATE TABLE IF NOT EXISTS logs (
-        id SERIAL PRIMARY KEY,
+    db.run(`CREATE TABLE IF NOT EXISTS logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         action TEXT NOT NULL,
         details TEXT NOT NULL,
-        timestamp TIMESTAMP NOT NULL
-      );
-    `);
+        timestamp TEXT NOT NULL
+    )`);
 
-    await client.query('COMMIT');
-    console.log('Schema is ready.');
-  } catch (e) {
-    await client.query('ROLLBACK');
-    console.error('Schema init error:', e);
-    throw e;
-  } finally {
-    client.release();
-  }
+    const insertWorkers = db.prepare("INSERT OR IGNORE INTO workers (id, name, phone_number, email, default_hourly_rate) VALUES (?, ?, ?, ?, ?)");
+    insertWorkers.run(1, 'Іван Петров', '099-111-22-33', 'ivan@example.com', 150);
+    insertWorkers.run(2, 'Марія Іванова', '067-444-55-66', 'maria@example.com', 175);
+    insertWorkers.finalize();
+
+    const testReportDate = '2025-08-29T10:00';
+    const insertFinalReport = db.prepare(`INSERT OR IGNORE INTO final_reports (id, job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+    insertFinalReport.run(1, 'JOB001', testReportDate, 50, 30, 20, 10, 100, 50, 25, 300, (err) => {
+        if (err) console.error('Error inserting test final report:', err);
+    });
+    insertFinalReport.finalize();
+
+    const insertReportEntry = db.prepare(`INSERT OR IGNORE INTO report_entries (final_report_id, worker_id, hours_worked, actual_hourly_rate, additional_cost, heavy, tips, gas) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+    insertReportEntry.run(1, 1, 8, 150, 50, 1, 1, 0, (err) => {
+        if (err) console.error('Error inserting test report entry:', err);
+    });
+    insertReportEntry.finalize();
+});
+
+function logAction(action, details) {
+    const timestamp = new Date().toISOString();
+    db.run(`INSERT INTO logs (action, details, timestamp) VALUES (?, ?, ?)`, [action, details, timestamp], (err) => {
+        if (err) {
+            console.error('Помилка запису в лог:', err.message);
+        }
+    });
 }
 
-// 5) Утиліта логування дій
-async function logAction(action, details) {
-  try {
-    await pool.query(
-      `INSERT INTO logs (action, details, timestamp) VALUES ($1, $2, now())`,
-      [action, details]
-    );
-  } catch (e) {
-    console.error('Log write error:', e.message);
-  }
-}
-
-// 6) Health-check
-app.get('/health', (req, res) => res.send('ok'));
-
-// 7) Маршрути
-
-// A) Отримати всі нарахування (JOIN) — heavy/tips/gas/paid віддамо як 0/1 для сумісності з фронтом
-app.get('/salary-entries', async (req, res) => {
-  const sql = `
-    SELECT 
-      re.id,
-      fr.job_number,
-      fr.report_date,
-      w.name AS worker_name,
-      re.hours_worked,
-      re.actual_hourly_rate,
-      re.additional_cost,
-      CASE WHEN re.heavy THEN 1 ELSE 0 END AS heavy,
-      CASE WHEN re.tips  THEN 1 ELSE 0 END AS tips,
-      CASE WHEN re.gas   THEN 1 ELSE 0 END AS gas,
-      CASE WHEN re.paid  THEN 1 ELSE 0 END AS paid
-    FROM report_entries re
-    LEFT JOIN final_reports fr ON re.final_report_id = fr.id
-    LEFT JOIN workers w        ON re.worker_id = w.id
-    ORDER BY fr.report_date DESC, fr.job_number DESC, re.id DESC
-  `;
-  try {
-    const { rows } = await pool.query(sql);
-    res.json(rows);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+app.get('/workers', (req, res) => {
+    db.all("SELECT id, name, phone_number, email, default_hourly_rate FROM workers", [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
 });
 
-// B) Оновити статус paid для конкретного запису report_entries
-app.put('/salary-entries/:id/paid', async (req, res) => {
-  const { id } = req.params;
-  const { paid } = req.body;
-  try {
-    await pool.query(`UPDATE report_entries SET paid = $1 WHERE id = $2`, [!!paid, id]);
-    res.status(200).json({ id, paid: !!paid ? 1 : 0 });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+app.get('/final-reports', (req, res) => {
+    const sql = `
+        SELECT 
+            final_reports.id,
+            final_reports.job_number,
+            final_reports.report_date,
+            final_reports.cash_sum,
+            final_reports.zelle_sum,
+            final_reports.cc_sum,
+            final_reports.venmo_sum,
+            final_reports.heavy_sum,
+            final_reports.tips_sum,
+            final_reports.gas_sum,
+            final_reports.total_labor_cost,
+            COUNT(report_entries.id) AS worker_count,
+            SUM((report_entries.hours_worked * report_entries.actual_hourly_rate) + report_entries.additional_cost) AS total_cost
+        FROM final_reports
+        LEFT JOIN report_entries ON final_reports.id = report_entries.final_report_id
+        GROUP BY final_reports.id
+        ORDER BY final_reports.id DESC`;
+
+    db.all(sql, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        console.log('Дані, повернуті з /final-reports:', rows);
+        res.json(rows);
+    });
 });
 
-// C) Список працівників
-app.get('/workers', async (req, res) => {
-  try {
-    const { rows } = await pool.query(
-      `SELECT id, name, phone_number, email, default_hourly_rate FROM workers ORDER BY id DESC`
-    );
-    res.json(rows);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// D) Додати працівника
-app.post('/workers', async (req, res) => {
-  const { name, phone_number, email, default_hourly_rate } = req.body;
-  if (!name || default_hourly_rate == null) {
-    return res.status(400).json({ error: 'Name and default_hourly_rate are required' });
-  }
-  try {
-    const q = `
-      INSERT INTO workers (name, phone_number, email, default_hourly_rate)
-      VALUES ($1,$2,$3,$4) RETURNING id
-    `;
-    const { rows } = await pool.query(q, [name, phone_number || null, email || null, default_hourly_rate]);
-    await logAction('ADD_WORKER', `Додано працівника ${name} (ID: ${rows[0].id})`);
-    res.status(201).json({ id: rows[0].id, name });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// E) Оновити працівника
-app.put('/workers/:id', async (req, res) => {
-  const { id } = req.params;
-  const { name, phone_number, email, default_hourly_rate } = req.body;
-  if (!name || default_hourly_rate == null) {
-    return res.status(400).json({ error: 'Name and default_hourly_rate are required' });
-  }
-  try {
-    await pool.query(
-      `UPDATE workers SET name=$1, phone_number=$2, email=$3, default_hourly_rate=$4 WHERE id=$5`,
-      [name, phone_number || null, email || null, default_hourly_rate, id]
-    );
-    await logAction('UPDATE_WORKER', `Оновлено працівника з ID ${id}: ${name}`);
-    res.status(200).json({ updatedID: id });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// F) Видалити працівника (worker_id у report_entries стане NULL завдяки ON DELETE SET NULL)
-app.delete('/workers/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const { rows } = await pool.query(`DELETE FROM workers WHERE id=$1 RETURNING id, name`, [id]);
-    if (!rows.length) return res.status(404).json({ error: 'Worker not found' });
-    await logAction('DELETE_WORKER', `Видалено працівника ${rows[0].name} (ID: ${id})`);
-    res.status(200).json({ deletedID: id });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// G) Список фінальних звітів (з агрегатами)
-app.get('/final-reports', async (req, res) => {
-  const sql = `
-    SELECT 
-      fr.id,
-      fr.job_number,
-      fr.report_date,
-      fr.cash_sum, fr.zelle_sum, fr.cc_sum, fr.venmo_sum,
-      fr.heavy_sum, fr.tips_sum, fr.gas_sum,
-      fr.total_labor_cost,
-      COUNT(re.id) AS worker_count,
-      COALESCE(SUM((re.hours_worked * re.actual_hourly_rate) + re.additional_cost), 0) AS total_cost
-    FROM final_reports fr
-    LEFT JOIN report_entries re ON fr.id = re.final_report_id
-    GROUP BY fr.id
-    ORDER BY fr.id DESC
-  `;
-  try {
-    const { rows } = await pool.query(sql);
-    res.json(rows);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
-});
-
-// H) Створити фінальний звіт з рядками (транзакція)
-app.post('/final-reports', async (req, res) => {
-  let { job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, reports, total_labor_cost } = req.body;
-  if (!job_number || !Array.isArray(reports) || reports.length === 0) {
-    return res.status(400).json({ error: 'Job number and reports are required' });
-  }
-
-  // уніфікуємо дату до "YYYY-MM-DDTHH:mm"
-  function toIsoMinute(s) {
-    const d = s ? new Date(s) : new Date();
-    if (isNaN(d.getTime())) return null;
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    return `${y}-${m}-${day}T${hh}:${mm}`;
-  }
-  const final_report_date = toIsoMinute(report_date);
-  if (!final_report_date) return res.status(400).json({ error: 'Invalid report_date' });
-
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
-
-    // перевірка унікальності job_number
-    const existing = await client.query(`SELECT id FROM final_reports WHERE job_number=$1`, [job_number]);
-    if (existing.rowCount) {
-      await client.query('ROLLBACK');
-      return res.status(400).json({ error: `Звіт з номером роботи '${job_number}' вже існує.` });
+app.post('/final-reports', (req, res) => {
+    const { job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, reports, total_labor_cost } = req.body;
+    if (!job_number || !reports || reports.length === 0) {
+        return res.status(400).json({ error: "Job number and reports are required" });
     }
 
-    const ins = `
-      INSERT INTO final_reports
-        (job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
-      RETURNING id
-    `;
-    const { rows } = await client.query(ins, [
-      job_number,
-      final_report_date,
-      cash_sum || 0, zelle_sum || 0, cc_sum || 0, venmo_sum || 0,
-      heavy_sum || 0, tips_sum || 0, gas_sum || 0,
-      total_labor_cost || 0
-    ]);
-    const final_report_id = rows[0].id;
+    console.log('Вхідна report_date:', report_date);
+    let final_report_date;
+    if (report_date) {
+        const parsed = new Date(report_date);
+        if (isNaN(parsed.getTime())) {
+            return res.status(400).json({ error: "Invalid report_date" });
+        }
+        const year = parsed.getFullYear();
+        const month = String(parsed.getMonth() + 1).padStart(2, '0');
+        const day = String(parsed.getDate()).padStart(2, '0');
+        const hours = String(parsed.getHours()).padStart(2, '0');
+        const minutes = String(parsed.getMinutes()).padStart(2, '0');
+        final_report_date = `${year}-${month}-${day}T${hours}:${minutes}`;
+    } else {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hours = String(now.getHours()).padStart(2, '0');
+        const minutes = String(now.getMinutes()).padStart(2, '0');
+        final_report_date = `${year}-${month}-${day}T${hours}:${minutes}`;
+    }
+    console.log('Збережена final_report_date:', final_report_date);
 
-    const stmt = `
-      INSERT INTO report_entries
-        (final_report_id, worker_id, hours_worked, actual_hourly_rate, additional_cost, heavy, tips, gas)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-    `;
-    for (const r of reports) {
-      await client.query(stmt, [
-        final_report_id,
-        r.worker_id ?? null,
-        r.hours_worked,
-        r.actual_hourly_rate,
-        r.additional_cost || 0,
-        !!r.heavy,
-        !!r.tips,
-        !!r.gas
-      ]);
+    db.get('SELECT id FROM final_reports WHERE job_number = ?', [job_number], (err, row) => {
+        if (err) {
+            return res.status(500).json({ error: err.message });
+        }
+        if (row) {
+            return res.status(400).json({ error: `Звіт з номером роботи '${job_number}' вже існує.` });
+        }
+
+        db.run('BEGIN TRANSACTION', (beginErr) => {
+            if (beginErr) {
+                console.error('Помилка початку транзакції:', beginErr.message);
+                return res.status(500).json({ error: beginErr.message });
+            }
+
+            db.run(`INSERT INTO final_reports (job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                [job_number, final_report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost || 0],
+                function(insertErr) {
+                    if (insertErr) {
+                        db.run('ROLLBACK');
+                        console.error('Помилка вставки в final_reports:', insertErr.message);
+                        return res.status(500).json({ error: insertErr.message });
+                    }
+
+                    const final_report_id = this.lastID;
+                    logAction('ADD_REPORT', `Додано звіт з номером ${job_number} (ID: ${final_report_id})`);
+
+                    const stmt = db.prepare(`INSERT INTO report_entries (final_report_id, worker_id, hours_worked, actual_hourly_rate, additional_cost, heavy, tips, gas) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+
+                    const insertReportEntries = (index) => {
+                        if (index >= reports.length) {
+                            stmt.finalize();
+                            db.run('COMMIT', (commitErr) => {
+                                if (commitErr) {
+                                    console.error('Помилка COMMIT:', commitErr.message);
+                                    return res.status(500).json({ error: commitErr.message });
+                                }
+                                return res.status(201).json({ id: final_report_id, message: "Final report created successfully" });
+                            });
+                            return;
+                        }
+
+                        const report = reports[index];
+                        stmt.run(final_report_id, report.worker_id, report.hours_worked, report.actual_hourly_rate, report.additional_cost, report.heavy ? 1 : 0, report.tips ? 1 : 0, report.gas ? 1 : 0, (runErr) => {
+                            if (runErr) {
+                                db.run('ROLLBACK');
+                                console.error('Помилка вставки в report_entries:', runErr.message);
+                                return res.status(500).json({ error: runErr.message });
+                            }
+                            insertReportEntries(index + 1);
+                        });
+                    };
+                    
+                    insertReportEntries(0);
+                });
+        });
+    });
+});
+
+// Оновлення фінального звіту (PUT /final-reports/:id)
+app.put('/final-reports/:id', (req, res) => {
+    const { id } = req.params;
+    const { job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, reports, total_labor_cost } = req.body;
+    if (!job_number || !reports || reports.length === 0) {
+        return res.status(400).json({ error: "Job number and reports are required" });
     }
 
-    await client.query('COMMIT');
-    await logAction('ADD_REPORT', `Додано звіт з номером ${job_number} (ID: ${final_report_id})`);
-    res.status(201).json({ id: final_report_id, message: 'Final report created successfully' });
-  } catch (e) {
-    await client.query('ROLLBACK');
-    res.status(500).json({ error: e.message });
-  } finally {
-    client.release();
-  }
+    db.run('BEGIN TRANSACTION', (beginErr) => {
+        if (beginErr) {
+            return res.status(500).json({ error: beginErr.message });
+        }
+        db.run(`UPDATE final_reports SET job_number = ?, report_date = ?, cash_sum = ?, zelle_sum = ?, cc_sum = ?, venmo_sum = ?, heavy_sum = ?, tips_sum = ?, gas_sum = ?, total_labor_cost = ? WHERE id = ?`,
+            [job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, total_labor_cost || 0, id],
+            function(updateErr) {
+                if (updateErr) {
+                    db.run('ROLLBACK');
+                    return res.status(500).json({ error: updateErr.message });
+                }
+                db.run(`DELETE FROM report_entries WHERE final_report_id = ?`, [id], function(deleteErr) {
+                    if (deleteErr) {
+                        db.run('ROLLBACK');
+                        return res.status(500).json({ error: deleteErr.message });
+                    }
+                    const stmt = db.prepare(`INSERT INTO report_entries (final_report_id, worker_id, hours_worked, actual_hourly_rate, additional_cost, heavy, tips, gas) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
+                    const insertEntries = (index) => {
+                        if (index >= reports.length) {
+                            stmt.finalize();
+                            db.run('COMMIT', (commitErr) => {
+                                if (commitErr) {
+                                    return res.status(500).json({ error: commitErr.message });
+                                }
+                                return res.status(200).json({ id, message: "Final report updated successfully" });
+                            });
+                            return;
+                        }
+                        const report = reports[index];
+                        stmt.run(id, report.worker_id, report.hours_worked, report.actual_hourly_rate, report.additional_cost || 0, report.heavy ? 1 : 0, report.tips ? 1 : 0, report.gas ? 1 : 0, (runErr) => {
+                            if (runErr) {
+                                db.run('ROLLBACK');
+                                return res.status(500).json({ error: runErr.message });
+                            }
+                            insertEntries(index + 1);
+                        });
+                    };
+                    insertEntries(0);
+                });
+            });
+    });
 });
 
-// I) Оновлення фінального звіту (перезапис рядків)
-app.put('/final-reports/:id', async (req, res) => {
-  const { id } = req.params;
-  let { job_number, report_date, cash_sum, zelle_sum, cc_sum, venmo_sum, heavy_sum, tips_sum, gas_sum, reports, total_labor_cost } = req.body;
-  if (!job_number || !Array.isArray(reports) || reports.length === 0) {
-    return res.status(400).json({ error: 'Job number and reports are required' });
-  }
-  const client = await pool.connect();
-  try {
-    await client.query('BEGIN');
+app.get('/final-reports/:id', (req, res) => {
+    const reportId = req.params.id;
+    const reportData = {};
 
-    await client.query(`
-      UPDATE final_reports
-         SET job_number=$1, report_date=$2, cash_sum=$3, zelle_sum=$4, cc_sum=$5, venmo_sum=$6,
-             heavy_sum=$7, tips_sum=$8, gas_sum=$9, total_labor_cost=$10
-       WHERE id=$11
-    `, [
-      job_number, report_date, cash_sum || 0, zelle_sum || 0, cc_sum || 0, venmo_sum || 0,
-      heavy_sum || 0, tips_sum || 0, gas_sum || 0, total_labor_cost || 0, id
-    ]);
+    db.get(`SELECT 
+            final_reports.*,
+            (final_reports.cash_sum + final_reports.zelle_sum + final_reports.cc_sum + final_reports.venmo_sum) AS total_payment
+        FROM final_reports WHERE final_reports.id = ?`, 
+        [reportId], 
+        (err, reportRow) => {
+            if (err) {
+                return res.status(500).json({ error: err.message });
+            }
+            if (!reportRow) {
+                return res.status(404).json({ error: "Report not found" });
+            }
+            reportData.report = reportRow;
 
-    await client.query(`DELETE FROM report_entries WHERE final_report_id=$1`, [id]);
+            db.all(`SELECT report_entries.*, workers.name AS worker_name, workers.phone_number, workers.email 
+                    FROM report_entries 
+                    LEFT JOIN workers ON report_entries.worker_id = workers.id 
+                    WHERE final_report_id = ?`, 
+                [reportId], 
+                (err, entries) => {
+                    if (err) {
+                        return res.status(500).json({ error: err.message });
+                    }
+                    reportData.entries = entries;
+                    console.log('Дані, повернуті з /final-reports/:id:', reportData);
+                    res.json(reportData);
+                });
+        });
+});
 
-    const stmt = `
-      INSERT INTO report_entries
-        (final_report_id, worker_id, hours_worked, actual_hourly_rate, additional_cost, heavy, tips, gas)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
-    `;
-    for (const r of reports) {
-      await client.query(stmt, [
-        id,
-        r.worker_id ?? null,
-        r.hours_worked,
-        r.actual_hourly_rate,
-        r.additional_cost || 0,
-        !!r.heavy,
-        !!r.tips,
-        !!r.gas
-      ]);
+app.post('/workers', (req, res) => {
+    const { name, phone_number, email, default_hourly_rate } = req.body;
+    if (!name || !default_hourly_rate) {
+        res.status(400).json({ error: "Name and default_hourly_rate are required" });
+        return;
     }
-
-    await client.query('COMMIT');
-    res.status(200).json({ id, message: 'Final report updated successfully' });
-  } catch (e) {
-    await client.query('ROLLBACK');
-    res.status(500).json({ error: e.message });
-  } finally {
-    client.release();
-  }
+    db.run(`INSERT INTO workers (name, phone_number, email, default_hourly_rate) VALUES (?, ?, ?, ?)`,
+        [name, phone_number || null, email || null, default_hourly_rate],
+        function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            logAction('ADD_WORKER', `Додано працівника ${name} (ID: ${this.lastID})`);
+            res.status(201).json({ id: this.lastID, name });
+        });
 });
 
-// J) Один звіт + його рядки
-app.get('/final-reports/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    const report = await pool.query(`
-      SELECT fr.*,
-             (COALESCE(fr.cash_sum,0) + COALESCE(fr.zelle_sum,0) + COALESCE(fr.cc_sum,0) + COALESCE(fr.venmo_sum,0)) AS total_payment
-      FROM final_reports fr
-      WHERE fr.id = $1
-    `, [id]);
-
-    if (!report.rowCount) return res.status(404).json({ error: 'Report not found' });
-
-    const entries = await pool.query(`
-      SELECT re.*,
-             w.name AS worker_name,
-             w.phone_number,
-             w.email
-      FROM report_entries re
-      LEFT JOIN workers w ON re.worker_id = w.id
-      WHERE re.final_report_id = $1
-      ORDER BY re.id
-    `, [id]);
-
-    res.json({ report: report.rows[0], entries: entries.rows });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+app.put('/workers/:id', (req, res) => {
+    const { id } = req.params;
+    const { name, phone_number, email, default_hourly_rate } = req.body;
+    if (!name || !default_hourly_rate) {
+        res.status(400).json({ error: "Name and default_hourly_rate are required" });
+        return;
+    }
+    db.run(`UPDATE workers SET name = ?, phone_number = ?, email = ?, default_hourly_rate = ? WHERE id = ?`,
+        [name, phone_number || null, email || null, default_hourly_rate, id],
+        function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            logAction('UPDATE_WORKER', `Оновлено працівника з ID ${id}: ${name}`);
+            res.status(200).json({ updatedID: id });
+        });
 });
 
-// K) Видалити фінальний звіт (рядки видаляться завдяки ON DELETE CASCADE)
-app.delete('/final-reports/:id', async (req, res) => {
-  const { id } = req.params;
-  try {
-    // отримаємо job_number для логів
-    const r = await pool.query(`DELETE FROM final_reports WHERE id=$1 RETURNING job_number`, [id]);
-    if (!r.rowCount) return res.status(404).json({ error: 'Report not found' });
-    await logAction('DELETE_REPORT', `Видалено звіт з номером ${r.rows[0].job_number} (ID: ${id})`);
-    res.status(200).json({ message: 'Звіт успішно видалено' });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+app.delete('/final-reports/:id', (req, res) => {
+    const { id } = req.params;
+
+    db.get(`SELECT job_number FROM final_reports WHERE id = ?`, [id], (err, row) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        if (!row) {
+            res.status(404).json({ error: "Report not found" });
+            return;
+        }
+
+        db.run('BEGIN TRANSACTION', (beginErr) => {
+            if (beginErr) {
+                return res.status(500).json({ error: beginErr.message });
+            }
+
+            db.run(`DELETE FROM report_entries WHERE final_report_id = ?`, id, (deleteEntriesErr) => {
+                if (deleteEntriesErr) {
+                    db.run('ROLLBACK');
+                    return res.status(500).json({ error: deleteEntriesErr.message });
+                }
+
+                db.run(`DELETE FROM final_reports WHERE id = ?`, id, (deleteReportErr) => {
+                    if (deleteReportErr) {
+                        db.run('ROLLBACK');
+                        return res.status(500).json({ error: deleteReportErr.message });
+                    }
+
+                    db.run('COMMIT', (commitErr) => {
+                        if (commitErr) {
+                            return res.status(500).json({ error: commitErr.message });
+                        }
+                        logAction('DELETE_REPORT', `Видалено звіт з номером ${row.job_number} (ID: ${id})`);
+                        res.status(200).json({ message: "Звіт успішно видалено" });
+                    });
+                });
+            });
+        });
+    });
 });
 
-// L) Логи
-app.get('/logs', async (req, res) => {
-  try {
-    const { rows } = await pool.query(`SELECT action, details, timestamp FROM logs ORDER BY timestamp DESC`);
-    res.json(rows);
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+app.delete('/workers/:id', (req, res) => {
+    const { id } = req.params;
+
+    db.get(`SELECT name FROM workers WHERE id = ?`, [id], (err, row) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        if (!row) {
+            res.status(404).json({ error: "Worker not found" });
+            return;
+        }
+
+        db.run(`DELETE FROM workers WHERE id = ?`, id, function(err) {
+            if (err) {
+                res.status(500).json({ error: err.message });
+                return;
+            }
+            logAction('DELETE_WORKER', `Видалено працівника ${row.name} (ID: ${id})`);
+            res.status(200).json({ deletedID: id });
+        });
+    });
 });
 
-app.delete('/logs', async (req, res) => {
-  try {
-    await pool.query(`DELETE FROM logs`);
-    await logAction('CLEAR_LOGS', 'Всі записи логу очищено');
-    res.status(200).json({ message: 'Лог успішно очищено' });
-  } catch (e) {
-    res.status(500).json({ error: e.message });
-  }
+app.get('/logs', (req, res) => {
+    db.all(`SELECT action, details, timestamp FROM logs ORDER BY timestamp DESC`, [], (err, rows) => {
+        if (err) {
+            res.status(500).json({ error: err.message });
+            return;
+        }
+        res.json(rows);
+    });
 });
 
-app.post('/logs', async (req, res) => {
-  const { action, details } = req.body;
-  if (!action || !details) return res.status(400).json({ error: 'Action and details are required' });
-  await logAction(action, details);
-  res.status(201).json({ message: 'Log entry created successfully' });
+app.delete('/logs', (req, res) => {
+    db.run(`DELETE FROM logs`, (err) => {
+        if (err) {
+            console.error('Помилка при очищенні логу:', err.message);
+            return res.status(500).json({ error: err.message });
+        }
+        logAction('CLEAR_LOGS', 'Всі записи логу очищено');
+        res.status(200).json({ message: "Лог успішно очищено" });
+    });
 });
 
-// 8) Запускаємо сервер і схему
-initSchema()
-  .then(() => app.listen(PORT, () => console.log(`Server is running on port ${PORT}`)))
-  .catch(err => {
-    console.error('Failed to init schema:', err);
-    process.exit(1);
-  });
+app.post('/logs', (req, res) => {
+    const { action, details } = req.body;
+    if (!action || !details) {
+        return res.status(400).json({ error: "Action and details are required" });
+    }
+    logAction(action, details);
+    res.status(201).json({ message: "Log entry created successfully" });
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
+});

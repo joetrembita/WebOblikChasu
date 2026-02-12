@@ -1,5 +1,4 @@
-const backendUrl = 'http://localhost:3000';
-const API = (window.__APP_CONFIG__ && window.__APP_CONFIG__.API_BASE_URL) || "";
+const backendUrl = '';
 
 document.addEventListener('DOMContentLoaded', () => {
     loadWorkers();
@@ -7,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 async function loadWorkers() {
     try {
-        const response = await fetch(`${API}/workers`);
+        const response = await fetch(`${backendUrl}/workers`);
         const workers = await response.json();
         const workersTableBody = document.querySelector('#workers-table tbody');
 
@@ -68,7 +67,7 @@ document.getElementById('add-worker-form').addEventListener('submit', async (eve
     };
 
     try {
-        const response = await fetch(`${API}/workers`, {
+        const response = await fetch(`${backendUrl}/workers`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -95,7 +94,7 @@ async function deleteWorker(event) {
     }
 
     try {
-        const response = await fetch(`${API}/workers/${workerId}`, {
+        const response = await fetch(`${backendUrl}/workers/${workerId}`, {
             method: 'DELETE'
         });
 
@@ -133,7 +132,7 @@ async function updateWorker(event) {
     const email = row.querySelector('.edit-email-input').value || null;
 
     try {
-        const response = await fetch(`${API}/workers/${workerId}`, {
+        const response = await fetch(`${backendUrl}/workers/${workerId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name, default_hourly_rate: parseFloat(rate), phone_number: phone, email })
