@@ -103,9 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
     event.preventDefault();
         const select = document.getElementById('worker-select');
         const selectedOption = select.options[select.selectedIndex];
+
         const workerId = workerSelect.value;
         const workerName = workerSelect.options[workerSelect.selectedIndex].text;
+
         const rate = parseFloat(selectedOption.dataset.rate) || 0;
+
         const timeInput = document.getElementById('default-hours-input');
         const timeValue = timeInput ? timeInput.value : '';
         let hoursDecimal = 0;
@@ -120,7 +123,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
 
-        tempReports.push({
+        tempEntries.push({
             worker_id: workerId,
             worker_name: workerName,
             hours: hoursDecimal, 
@@ -131,21 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
     renderTempReports();
-    });
-    document.getElementById('add-to-report-form').addEventListener('submit', e => {
-        e.preventDefault();
-        const select = document.getElementById('worker-select');
-        const workerName = select.options[select.selectedIndex].text;
-        tempEntries.push({
-            workerId: workerId,
-            workerName: workerName,
-            hours: hoursDecimal, 
-            rate: rate,
-            heavy: false,
-            tips: false,
-            gas: false
-        });
-        renderTempTable();
     });
 
     document.querySelector('#temp-reports-table tbody').addEventListener('input', e => {
