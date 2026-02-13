@@ -100,12 +100,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     document.getElementById('add-to-report-form').addEventListener('submit', (event) => {
-    event.preventDefault();
+        event.preventDefault();
+
         const select = document.getElementById('worker-select');
         const selectedOption = select.options[select.selectedIndex];
 
-        const workerId = workerSelect.value;
-        const workerName = workerSelect.options[workerSelect.selectedIndex].text;
+        const workerId = select.value;
+        const workerName = selectedOption.text;
 
         const rate = parseFloat(selectedOption.dataset.rate) || 0;
 
@@ -113,27 +114,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeValue = timeInput ? timeInput.value : '';
         let hoursDecimal = 0;
 
-    if (timeValue) {
-        const [hours, minutes] = timeValue.split(':').map(Number);
-        hoursDecimal = hours + (minutes / 60);
-    }
+        if (timeValue) {
+            const [hours, minutes] = timeValue.split(':').map(Number);
+            hoursDecimal = hours + (minutes / 60);
+        }
 
-    if (tempReports.some(r => r.worker_id == workerId)) {
-        alert('This mover is already added.');
-        return;
-    }
+        // Перевірка на дублікат (використовуємо tempEntries і правильне ім'я змінної)
+        if (tempEntries.some(e => e.workerId == workerId)) {
+            alert('This mover is already added.');
+            return;
+        }
 
         tempEntries.push({
-            worker_id: workerId,
-            worker_name: workerName,
+            workerId: workerId,
+            workerName: workerName,
             hours: hoursDecimal, 
             rate: rate,
             heavy: false,
-            tips: false,
+            tips: true,
             gas: false
         });
 
-    renderTempReports();
+        renderTempTable();
     });
 
     document.querySelector('#temp-reports-table tbody').addEventListener('input', e => {
