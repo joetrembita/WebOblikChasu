@@ -10,14 +10,14 @@ async function loadWorkers() {
     try {
         const res = await fetch(`${backendUrl}/workers`);
         const workers = await res.json();
-        select.innerHTML = workers.map(w => `<option value="${w.id}">${w.name}</option>`).join('');
+        select.innerHTML = workers.map(w => `<option value="${w.id}" data-rate="${w.default_hourly_rate || 0}">${w.name}</option>`).join('');
     } catch (e) {
         select.innerHTML = '<option disabled>Loading error</option>';
     }
 }
 
-// --- Тимчасова таблиця працівників у звіті ---
-let tempEntries = [];
+
+let tempEntries = []; // Тимчасова таблиця працівників у звіті
 
 function renderTempTable() {
     const tbody = document.querySelector('#temp-reports-table tbody');
@@ -101,12 +101,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('add-to-report-form').addEventListener('submit', (event) => {
     event.preventDefault();
-
-        const workerSelect = document.getElementById('worker-select');
+        const select = document.getElementById('worker-select');
+        const selectedOption = select.options[select.selectedIndex];
         const workerId = workerSelect.value;
         const workerName = workerSelect.options[workerSelect.selectedIndex].text;
-    
-        const timeValue = document.getElementById('default-hours-input').value; // Наприклад "02:15"
+        const rate = parseFloat(selectedOption.dataset.rate) || 0;
+        const timeInput = document.getElementById('default-hours-input');
+        const timeValue = timeInput ? timeInput.value : '';
         let hoursDecimal = 0;
 
     if (timeValue) {
@@ -118,8 +119,6 @@ document.addEventListener('DOMContentLoaded', () => {
         alert('This mover is already added.');
         return;
     }
-
-        const rate = parseFloat(document.getElementById('rate-input').value) || 0;
 
         tempReports.push({
             worker_id: workerId,
@@ -138,10 +137,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const select = document.getElementById('worker-select');
         const workerName = select.options[select.selectedIndex].text;
         tempEntries.push({
-            workerId: select.value,
-            workerName,
-            hours: 0,
-            rate: 0,
+            workerId: workerId,
+            workerName: workerName,
+            hours: hoursDecimal, 
+            rate: rate,
             heavy: false,
             tips: false,
             gas: false
