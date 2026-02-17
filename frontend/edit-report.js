@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
             hoursDecimal = hours + (minutes / 60);
         }
 
-        // Перевірка на дублікат (використовуємо tempEntries і правильне ім'я змінної)
+        // Перевірка на дублікат
         if (tempEntries.some(e => e.workerId == workerId)) {
             alert('This mover is already added.');
             return;

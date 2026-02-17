@@ -99,22 +99,6 @@ async function loadReports() {
 }
 
 async function showReportDetails(reportId) {
-    try {
-        const response = await fetch(`${backendUrl}/final-reports/${reportId}`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        const reportData = await response.json();
-        console.log('Brakedown data:', reportData);
-        
-        const report = reportData.report;
-        const entries = reportData.entries.filter(entry => entry.worker_name);
-        
-        document.getElementById('main-reports-view').style.display = 'none';
-        document.getElementById('report-details-view').style.display = 'block';
-
-        document.getElementById('report-details-title').textContent = `Brakedown No. ${report.job_number} dated ${formatDate(report.report_date)}`;
-
         const heavyWorkersCount = entries.filter(e => e.heavy).length;
         const companyHeavy = heavyWorkersCount > 0 ? report.heavy_sum / (heavyWorkersCount + 1) : 0;
         const tipsWorkersCount = entries.filter(e => e.tips).length;
@@ -126,9 +110,17 @@ async function showReportDetails(reportId) {
         const totalPayment = (report.cash_sum + report.zelle_sum + report.cc_sum + report.venmo_sum).toFixed(2);
         const paymentBreakdown = `Cash: ${report.cash_sum.toFixed(2)}, Zelle: ${report.zelle_sum.toFixed(2)}, CC: ${report.cc_sum.toFixed(2)}, Venmo: ${report.venmo_sum.toFixed(2)}`;
 
+        // Динамічно рахуємо Total Labor Cost без чайових
+        let calculatedLaborCost = 0;
+        entries.forEach(entry => {
+            const basePay = entry.hours_worked * entry.actual_hourly_rate;
+            const heavyValue = entry.heavy ? perHeavy : 0;
+            const gasValue = entry.gas ? perGas : 0;
+            calculatedLaborCost += (basePay + heavyValue + gasValue);
+        });
         document.getElementById('report-summary-info').innerHTML = `
             <p><strong>Job number:</strong> ${report.job_number}</p>
-            <p><strong>Total labor cost:</strong> ${report.total_labor_cost.toFixed(2)}</p>
+            <p><strong>Total labor cost:</strong> ${calculatedLaborCost.toFixed(2)}</p>
             <p><strong>Total payments:</strong> ${totalPayment} (${paymentBreakdown})</p>
             <p><strong>Heavy:</strong> ${report.heavy_sum.toFixed(2)}</p>
             <p><strong>Tips:</strong> ${report.tips_sum.toFixed(2)}</p>
@@ -148,7 +140,7 @@ async function showReportDetails(reportId) {
             const heavyValue = entry.heavy ? perHeavy : 0;
             const tipsValue = entry.tips ? perTips : 0;
             const gasValue = entry.gas ? perGas : 0;
-            const totalEntryCost = basePay + heavyValue + tipsValue + gasValue;
+            const totalEntryCost = basePay + heavyValue + tipsValue + gasValue; 
 
             row.innerHTML = `
                 <td>${workerName}</td>
@@ -162,66 +154,6 @@ async function showReportDetails(reportId) {
             `;
             entriesTableBody.appendChild(row);
         });
-        
-        document.getElementById('delete-detailed-btn').dataset.id = reportId;
-        document.getElementById('delete-detailed-btn').addEventListener('click', deleteReport);
-
-        const editBtn = document.getElementById('edit-detailed-btn');
-        if (editBtn) {
-            editBtn.onclick = () => {
-                window.location.href = `edit-report.html?id=${reportId}`;
-            };
-        }
-
-        const approveBtn = document.getElementById('approve-detailed-btn');
-        if (approveBtn) {
-            approveBtn.onclick = async () => {
-                try {
-                    const logResponse = await fetch(`${backendUrl}/logs`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            action: 'APPROVE_REPORT',
-                            details: `approved №${report.job_number}`
-                        })
-                    });
-                    if (!logResponse.ok) {
-                        const errorData = await logResponse.json();
-                        throw new Error(`HTTP error! Status: ${logResponse.status}, Message: ${errorData.error || 'Unknown error'}`);
-                    }
-                    console.log('Log saved for APPROVE_REPORT');
-                } catch (error) {
-                    console.error('Approving log error:', error);
-                    alert('Log saving error. Brakedown sucsessfully approved');
-                }
-
-                const existingEntries = JSON.parse(localStorage.getItem('approvedSalaryEntries') || '[]');
-                const existingJobNumbers = new Set(existingEntries.map(e => e.job_number));
-
-                if (existingJobNumbers.has(report.job_number)) {
-                    alert(`Brakedown for job ${report.job_number} was already approved.`);
-                    return;
-                }
-
-                const existingIds = new Set(existingEntries.map(e => e.id));
-                const newEntries = reportData.entries
-                    .filter(entry => entry.worker_name && !existingIds.has(entry.id))
-                    .map(entry => ({
-                        ...entry,
-                        job_number: report.job_number,
-                        sum: (entry.hours_worked * entry.actual_hourly_rate + (entry.heavy ? perHeavy : 0) + (entry.tips ? perTips : 0) + (entry.gas ? perGas : 0)).toFixed(2)
-                    }));
-
-                const updatedEntries = newEntries.concat(existingEntries);
-                localStorage.setItem('approvedSalaryEntries', JSON.stringify(updatedEntries));
-                window.open('salary-form.html', '_blank');
-            };
-        }
-    } catch (error) {
-        console.error('Loading brakedown datails error:', error);
-    }
 }
 
 async function deleteReport(event) {
