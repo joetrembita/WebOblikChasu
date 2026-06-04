@@ -39,24 +39,37 @@ function renderTempTable() {
     recalcSums();
 }
 
+function roundValue(v) {
+    // округляємо до цілих (Math.round). Якщо потрібне інше правило — замінимо.
+    return Math.round(Number(v) || 0);
+}
+
 function recalcSums() {
     // Додаткові суми
     const heavySum = parseFloat(document.getElementById('heavy-input-final').value) || 0;
     const tipsSum = parseFloat(document.getElementById('tips-input-final').value) || 0;
     const gasSum = parseFloat(document.getElementById('gas-input-final').value) || 0;
+
     const heavyCount = tempEntries.filter(e => e.heavy).length;
     const tipsCount = tempEntries.filter(e => e.tips).length;
     const gasCount = tempEntries.filter(e => e.gas).length;
+
     const perHeavy = heavyCount > 0 ? heavySum / (heavyCount + 1) : 0;
     const perTips = tipsCount > 0 ? tipsSum / tipsCount : 0;
     const perGas = gasCount > 0 ? gasSum / gasCount : 0;
+
     document.querySelectorAll('#temp-reports-table tbody tr').forEach((row, idx) => {
         const entry = tempEntries[idx];
         const base = entry.hours * entry.rate;
+        const baseRounded = roundValue(base);
         const heavy = entry.heavy ? perHeavy : 0;
+        const heavyRounded = roundValue(heavy);
         const tips = entry.tips ? perTips : 0;
+        const tipsRounded = roundValue(tips);
         const gas = entry.gas ? perGas : 0;
-        row.querySelector('.sum-cell').textContent = (base + heavy + tips + gas).toFixed(2);
+
+        const total = baseRounded + heavyRounded + tipsRounded + gas;
+        row.querySelector('.sum-cell').textContent = total.toFixed(2);
     });
 }
 
